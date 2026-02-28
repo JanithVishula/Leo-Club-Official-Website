@@ -4,34 +4,21 @@
 # Build outputs
 **/dist/
 **/.vite/
-**/coverage/
-**/.turbo/
 
 # Environment files
 **/.env
 **/.env.local
 **/.env.*.local
-!app/.env.example
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-*.log
 
 # OS/editor
 .DS_Store
 Thumbs.db
-Desktop.ini
 .vscode/
-.idea/
-
-# Misc
-*.tmp
-*.temp
-*.swp
-*.swo
 
 # Nested repository
 LCPP/
