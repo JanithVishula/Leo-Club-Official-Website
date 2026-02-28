@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -8,15 +8,30 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { faqConfig } from '../config';
+import { listFaqsPublic } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function FAQ() {
+  const [faqs, setFaqs] = useState(faqConfig.faqs);
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const accordionRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const hasFaqContent = !!faqConfig.titleRegular || faqConfig.faqs.length > 0;
+  const hasFaqContent = !!faqConfig.titleRegular || faqs.length > 0;
+
+  useEffect(() => {
+    listFaqsPublic().then((data) => {
+      if (data.length > 0) {
+        const mapped = data.map(f => ({
+          id: `faq-${f.id}`,
+          question: f.question,
+          answer: f.answer,
+        }));
+        setFaqs(mapped);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -99,7 +114,7 @@ export function FAQ() {
         {/* FAQ Accordion */}
         <div ref={accordionRef}>
           <Accordion type="single" collapsible className="space-y-4">
-            {faqConfig.faqs.map((faq) => (
+            {faqs.map((faq) => (
               <AccordionItem
                 key={faq.id}
                 value={faq.id}

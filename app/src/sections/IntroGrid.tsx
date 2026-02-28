@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { introGridConfig } from '../config';
+import { listPortfolioImagesPublic } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,6 +21,7 @@ const imageAnimConfigs = [
 ];
 
 export function IntroGrid() {
+  const [portfolioImages, setPortfolioImages] = useState(introGridConfig.portfolioImages);
   const sectionRef = useRef<HTMLElement>(null);
   const titleLine1Ref = useRef<HTMLDivElement>(null);
   const titleLine2Ref = useRef<HTMLDivElement>(null);
@@ -28,7 +30,19 @@ export function IntroGrid() {
   const hasIntroContent =
     !!introGridConfig.titleLine1 ||
     !!introGridConfig.titleLine2 ||
-    introGridConfig.portfolioImages.length > 0;
+    portfolioImages.length > 0;
+
+  useEffect(() => {
+    listPortfolioImagesPublic().then((data) => {
+      if (data.length > 0) {
+        const mapped = data.map(img => ({
+          src: img.image_url,
+          alt: img.image_alt || 'Portfolio image',
+        }));
+        setPortfolioImages(mapped);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -184,7 +198,7 @@ export function IntroGrid() {
           ref={gridRef}
           className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[200px] md:auto-rows-[280px]"
         >
-          {introGridConfig.portfolioImages.map((image, index) => (
+          {portfolioImages.map((image, index) => (
             <div
               key={index}
               className={`grid-item relative overflow-hidden rounded-lg group cursor-pointer opacity-0 ${

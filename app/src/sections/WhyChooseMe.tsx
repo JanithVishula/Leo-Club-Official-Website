@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { whyChooseMeConfig } from '../config';
+import { listFeatureCardsPublic, getSiteSettingPublic } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -52,6 +53,8 @@ function Counter({ end, suffix = '', duration = 2, shouldAnimate }: CounterProps
 }
 
 export function WhyChooseMe() {
+  const [featureCards, setFeatureCards] = useState(whyChooseMeConfig.featureCards);
+  const [stats, setStats] = useState(whyChooseMeConfig.stats);
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
@@ -59,8 +62,38 @@ export function WhyChooseMe() {
   const [shouldAnimateStats, setShouldAnimateStats] = useState(false);
   const hasWhyChooseMeContent =
     !!whyChooseMeConfig.titleRegular ||
-    whyChooseMeConfig.stats.length > 0 ||
-    whyChooseMeConfig.featureCards.length > 0;
+    stats.length > 0 ||
+    featureCards.length > 0;
+
+  useEffect(() => {
+    // Fetch feature cards
+    listFeatureCardsPublic().then((data) => {
+      if (data.length > 0) {
+        const mapped = data.map(fc => ({
+          image: fc.image_url || '',
+          imageAlt: fc.title,
+          title: fc.title,
+          description: fc.description,
+        }));
+        setFeatureCards(mapped);
+      }
+    });
+
+    // Fetch stats
+    getSiteSettingPublic('stats').then((value) => {
+      if (value) {
+        try {
+          // Value is already parsed from JSONB
+          const parsed = Array.isArray(value) ? value : JSON.parse(value);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setStats(parsed);
+          }
+        } catch (e) {
+          console.error('Failed to parse stats:', e);
+        }
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -183,10 +216,10 @@ export function WhyChooseMe() {
           </h2>
         </div>
 
-        {/* Three Cards Row */}
+        {/* Feature Cards + Stats Grid - 3 Columns */}
         <div ref={cardsRef} className="grid md:grid-cols-3 gap-6 md:gap-8">
           {/* Feature Cards with Images */}
-          {whyChooseMeConfig.featureCards.map((card, index) => (
+          {featureCards.map((card, index) => (
             <div key={index} className="feature-card-image opacity-0 group">
               <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-slate-900">
                 {card.image && card.image.trim() !== '' ? (
@@ -214,8 +247,8 @@ export function WhyChooseMe() {
             </div>
           ))}
 
-          {/* Stats Card */}
-          {whyChooseMeConfig.stats.length > 0 && (
+          {/* Stats Card - 3rd Column */}
+          {stats.length > 0 && (
             <div
               ref={statsRef}
               className="feature-card-stats opacity-0 bg-offwhite rounded-lg p-8 md:p-10 flex flex-col justify-between"
@@ -227,7 +260,7 @@ export function WhyChooseMe() {
                   </p>
                 )}
                 <div className="space-y-8">
-                  {whyChooseMeConfig.stats.map((stat, index) => (
+                  {stats.map((stat, index) => (
                     <div key={index} className="border-b border-softblack/10 pb-6 last:border-0">
                       <p className="text-4xl md:text-5xl font-sans font-bold text-softblack tracking-tight">
                         <Counter

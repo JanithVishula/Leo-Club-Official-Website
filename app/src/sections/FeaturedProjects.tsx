@@ -12,13 +12,12 @@ export function FeaturedProjects() {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
-  const [keyProjects, setKeyProjects] = useState(featuredProjectsConfig.projects.slice(0, 5));
+  const [keyProjects, setKeyProjects] = useState<any[]>([]);
   const hasFeaturedProjectsContent = !!featuredProjectsConfig.titleRegular || keyProjects.length > 0;
 
   useEffect(() => {
     const loadProjects = async () => {
       const remoteProjects = await listProjectsPublic();
-      if (!remoteProjects.length) return;
 
       const mapped = remoteProjects
         .filter((item) => item.isFeatured)
@@ -32,12 +31,10 @@ export function FeaturedProjects() {
           href: '#',
           category: item.category || undefined,
           galleryImages: item.galleryImages,
-        }));
+        }))
+        .slice(0, 5);
 
-      if (mapped.length) {
-        const mergedProjects = [...mapped, ...featuredProjectsConfig.projects].slice(0, 5);
-        setKeyProjects(mergedProjects);
-      }
+      setKeyProjects(mapped);
     };
 
     loadProjects();
@@ -150,7 +147,7 @@ export function FeaturedProjects() {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [keyProjects]); // Re-run animations when projects load
 
   if (!hasFeaturedProjectsContent) return null;
 

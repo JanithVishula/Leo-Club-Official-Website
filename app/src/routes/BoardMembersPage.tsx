@@ -1,7 +1,29 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { boardMembersConfig } from '../config';
+import { listBoardMembersPublic } from '../lib/cmsApi';
 
 export function BoardMembersPage() {
+  const [members, setMembers] = useState(boardMembersConfig.members);
+
+  useEffect(() => {
+    listBoardMembersPublic().then((data) => {
+      if (data.length > 0) {
+        const mapped = data.map(m => ({
+          id: m.display_order,
+          name: m.name,
+          role: m.role,
+          image: m.image_url || '',
+          imageAlt: `${m.name} - ${m.role}`,
+          contactNumber: m.contact_number || 'Not provided',
+          cvLink: m.cv_link || '#',
+          contactLinks: m.contact_links as { label: string; href: string }[] || [],
+        }));
+        setMembers(mapped);
+      }
+    });
+  }, []);
+
   const hierarchyOrder: Record<string, number> = {
     President: 1,
     Advisor: 2,
@@ -33,7 +55,7 @@ export function BoardMembersPage() {
     return 'text-xl';
   };
 
-  const sortedMembers = [...boardMembersConfig.members].sort((a, b) => {
+  const sortedMembers = [...members].sort((a, b) => {
     const aRank = hierarchyOrder[a.role] ?? Number.MAX_SAFE_INTEGER;
     const bRank = hierarchyOrder[b.role] ?? Number.MAX_SAFE_INTEGER;
 

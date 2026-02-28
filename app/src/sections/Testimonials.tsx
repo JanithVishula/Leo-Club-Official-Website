@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -9,6 +9,7 @@ import 'swiper/css';
 // @ts-expect-error Swiper CSS import path has no TypeScript declarations
 import 'swiper/css/free-mode';
 import { testimonialsConfig } from '../config';
+import { listTestimonialsPublic } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,8 +17,29 @@ export function Testimonials() {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+  
+  // Use Supabase data with config.ts as fallback
+  const [testimonials, setTestimonials] = useState(testimonialsConfig.testimonials);
+  
+  useEffect(() => {
+    // Fetch testimonials from Supabase
+    listTestimonialsPublic().then(data => {
+      if (data.length > 0) {
+        // Map database structure to config structure
+        const mappedData = data.map(t => ({
+          id: t.display_order,
+          name: t.name,
+          role: t.role,
+          image: t.image_url || '',
+          quote: t.quote
+        }));
+        setTestimonials(mappedData);
+      }
+    });
+  }, []);
+  
   const hasTestimonialsContent =
-    !!testimonialsConfig.titleRegular || testimonialsConfig.testimonials.length > 0;
+    !!testimonialsConfig.titleRegular || testimonials.length > 0;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -81,7 +103,7 @@ export function Testimonials() {
           spaceBetween={24}
           slidesPerView={1.2}
           centeredSlides={true}
-          loop={testimonialsConfig.testimonials.length >= 6}
+          loop={testimonials.length >= 6}
           speed={800}
           autoplay={{
             delay: 4000,
@@ -107,7 +129,7 @@ export function Testimonials() {
           }}
           className="!px-6"
         >
-          {testimonialsConfig.testimonials.map((testimonial) => (
+          {testimonials.map((testimonial) => (
             <SwiperSlide key={testimonial.id}>
               <div className="group bg-offwhite rounded-lg p-8 md:p-10 h-full transition-all duration-500 hover:bg-blue-950 hover:text-white">
                 {/* Quote icon */}

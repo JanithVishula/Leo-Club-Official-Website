@@ -281,3 +281,104 @@ export async function deleteAchievementAdmin(id: string) {
   const { error } = await supabase!.from('achievements').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+// =========================
+// FULL CMS API FUNCTIONS
+// =========================
+
+// Board Members
+export async function listBoardMembersPublic() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('board_members')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+// Testimonials
+export async function listTestimonialsPublic() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('testimonials')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+// FAQs
+export async function listFaqsPublic() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('faqs')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+// Services
+export async function listServicesPublic() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('services')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+// Feature Cards
+export async function listFeatureCardsPublic() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('feature_cards')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+// Portfolio Images
+export async function listPortfolioImagesPublic() {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('portfolio_images')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true});
+  if (error) return [];
+  return data ?? [];
+}
+
+// Site Settings
+export async function getSiteSettingPublic(key: string) {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('*')
+    .eq('key', key)
+    .single();
+  if (error) return null;
+  return data?.value ?? null;
+}
+
+export async function listAllSiteSettingsPublic() {
+  if (!supabase) return {};
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('*');
+  if (error) return {};
+  
+  const settings: Record<string, any> = {};
+  (data ?? []).forEach(row => {
+    settings[row.key] = row.value;
+  });
+  return settings;
+}

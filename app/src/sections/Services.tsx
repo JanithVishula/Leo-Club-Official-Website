@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Camera, Diamond, Users, Sparkles, type LucideIcon } from 'lucide-react';
+import { Camera, Diamond, Users, Sparkles, Leaf, BookOpen, Award, Heart, Zap, type LucideIcon } from 'lucide-react';
 import { servicesConfig } from '../config';
+import { listServicesPublic } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -11,13 +12,32 @@ const iconMap: Record<string, LucideIcon> = {
   Diamond,
   Users,
   Sparkles,
+  Leaf,
+  BookOpen,
+  Award,
+  Heart,
+  Zap,
 };
 
 export function Services() {
+  const [services, setServices] = useState(servicesConfig.services);
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const hasServicesContent = !!servicesConfig.titleLine1 || servicesConfig.services.length > 0;
+  const hasServicesContent = !!servicesConfig.titleLine1 || services.length > 0;
+
+  useEffect(() => {
+    listServicesPublic().then((data) => {
+      if (data.length > 0) {
+        const mapped = data.map(s => ({
+          iconName: s.icon_name,
+          title: s.title,
+          description: s.description,
+        }));
+        setServices(mapped);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -95,7 +115,7 @@ export function Services() {
 
           {/* Right Column - Services Grid */}
           <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/10">
-            {servicesConfig.services.map((service, index) => {
+            {services.map((service, index) => {
               const Icon = iconMap[service.iconName] || Camera;
               return (
                 <div

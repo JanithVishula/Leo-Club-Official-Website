@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { featuredProjectsConfig } from '../config';
 import { listProjectsPublic } from '../lib/cmsApi';
 
 function parseProjectDateToTimestamp(rawDate: string): number {
@@ -59,14 +58,13 @@ function parseProjectDateToTimestamp(rawDate: string): number {
 }
 
 export function ProjectsPage() {
-  const [projects, setProjects] = useState(featuredProjectsConfig.projects);
+  const [projects, setProjects] = useState<any[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     const loadProjects = async () => {
       const remoteProjects = await listProjectsPublic();
-      if (!remoteProjects.length) return;
 
       const mapped = remoteProjects.map((item, index) => ({
         id: 10000 + index,
@@ -80,7 +78,7 @@ export function ProjectsPage() {
         galleryImages: item.galleryImages,
       }));
 
-      setProjects([...mapped, ...featuredProjectsConfig.projects]);
+      setProjects(mapped);
     };
 
     loadProjects();
@@ -98,7 +96,7 @@ export function ProjectsPage() {
     ? activeProject.galleryImages
     : activeProject
       ? [activeProject.image]
-      : []).filter((img) => img && img.trim() !== '');
+      : []).filter((img: string) => img && img.trim() !== '');
 
   const openGallery = (projectId: number) => {
     setActiveProjectId(projectId);
