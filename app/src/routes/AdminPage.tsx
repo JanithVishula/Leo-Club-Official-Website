@@ -547,11 +547,6 @@ function ApplicationCard({
   const [status, setStatus] = useState<ApplicationStatus>(application.status);
   const [notes, setNotes] = useState(application.adminNotes || '');
 
-  useEffect(() => {
-    setStatus(application.status);
-    setNotes(application.adminNotes || '');
-  }, [application.id, application.status, application.adminNotes]);
-
   return (
     <article className="rounded-xl border border-white/10 bg-slate-900/80 p-5">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
