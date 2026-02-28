@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Test - Supabase Storage</title>
+  <style>
+    body { background: #0f172a; color: white; font-family: system-ui; padding: 40px; }
+    h1 { color: #60a5fa; }
+    .test-section { margin: 40px 0; padding: 20px; background: #1e293b; border-radius: 8px; }
+    .image-test { margin: 20px 0; }
+    img { max-width: 400px; height: auto; border: 2px solid #334155; border-radius: 4px; }
+    .success { color: #6ee7b7; }
+    .error { color: #fca5a5; }
+    .url { color: #93c5fd; font-size: 12px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Image Loading Test</h1>
+  <p>Testing if Supabase Storage images load correctly in the browser.</p>
+
+  <div class="test-section">
+    <h2>Paradisaye Sahurda Yathra Images</h2>
+    <div class="image-test">
+      <p class="url">https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049011662332658.jpeg</p>
+      <img 
+        src="https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049011662332658.jpeg" 
+        alt="Paradisaye Sahurda Yathra 1"
+        onload="this.parentElement.querySelector('.status').innerHTML = '<span class=success>✓ Loaded successfully</span>'"
+        onerror="this.parentElement.querySelector('.status').innerHTML = '<span class=error>✗ Failed to load - Check Supabase Storage Dashboard</span>'"
+      />
+      <p class="status">Loading...</p>
+    </div>
+
+    <div class="image-test">
+      <p class="url">https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049571431762039.jpeg</p>
+      <img 
+        src="https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049571431762039.jpeg" 
+        alt="Paradisaye Sahurda Yathra 2"
+        onload="this.parentElement.querySelector('.status').innerHTML = '<span class=success>✓ Loaded successfully</span>'"
+        onerror="this.parentElement.querySelector('.status').innerHTML = '<span class=error>✗ Failed to load</span>'"
+      />
+      <p class="status">Loading...</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Sadaham Puja Images</h2>
+    <div class="image-test">
+      <p class="url">https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja01.jpeg</p>
+      <img 
+        src="https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja01.jpeg" 
+        alt="Sadaham Puja 1"
+        onload="this.parentElement.querySelector('.status').innerHTML = '<span class=success>✓ Loaded successfully</span>'"
+        onerror="this.parentElement.querySelector('.status').innerHTML = '<span class=error>✗ Failed to load</span>'"
+      />
+      <p class="status">Loading...</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>ELITE 25 Images</h2>
+    <div class="image-test">
+      <p class="url">https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/hero-image.jpeg</p>
+      <img 
+        src="https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/hero-image.jpeg" 
+        alt="ELITE 25 Hero"
+        onload="this.parentElement.querySelector('.status').innerHTML = '<span class=success>✓ Loaded successfully</span>'"
+        onerror="this.parentElement.querySelector('.status').innerHTML = '<span class=error>✗ Failed to load</span>'"
+      />
+      <p class="status">Loading...</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Member Images</h2>
+    <div class="image-test">
+      <p class="url">https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/janith-vishula.jpg</p>
+      <img 
+        src="https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/janith-vishula.jpg" 
+        alt="Janith Vishula"
+        onload="this.parentElement.querySelector('.status').innerHTML = '<span class=success>✓ Loaded successfully</span>'"
+        onerror="this.parentElement.querySelector('.status').innerHTML = '<span class=error>✗ Failed to load</span>'"
+      />
+      <p class="status">Loading...</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Troubleshooting</h2>
+    <p>If images fail to load:</p>
+    <ol style="line-height: 2;">
+      <li>Check <strong>Supabase Dashboard → Storage → images</strong> - verify files exist</li>
+      <li>Verify bucket is set to <strong>Public</strong></li>
+      <li>Check RLS policies allow public SELECT</li>
+      <li>Run the updated <code>schema.sql</code> if you haven't already</li>
+      <li>Check browser console (F12) for CORS or 404 errors</li>
+    </ol>
+  </div>
+</body>
+</html>

@@ -63,13 +63,19 @@ export function BoardMembersPage() {
               key={member.id}
               className={`overflow-hidden rounded-xl border border-white/10 bg-slate-900/80 ${getCardSpanClasses(member.role)}`}
             >
-              <div className={`${getImageAspectClass(member.role)} overflow-hidden`}>
-                <img
-                  src={member.image}
-                  alt={member.imageAlt}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
+              <div className={`${getImageAspectClass(member.role)} overflow-hidden bg-slate-950`}>
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt={member.imageAlt}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center border-2 border-dashed border-white/20">
+                    <span className="text-xs uppercase tracking-widest text-white/40 font-body">Add Photo</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4 p-5">

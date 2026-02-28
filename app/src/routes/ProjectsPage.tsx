@@ -94,11 +94,11 @@ export function ProjectsPage() {
     ? sortedProjects.find((project) => project.id === activeProjectId) || null
     : null;
 
-  const activeImages = activeProject?.galleryImages?.length
+  const activeImages = (activeProject?.galleryImages?.length
     ? activeProject.galleryImages
     : activeProject
       ? [activeProject.image]
-      : [];
+      : []).filter((img) => img && img.trim() !== '');
 
   const openGallery = (projectId: number) => {
     setActiveProjectId(projectId);
@@ -162,19 +162,49 @@ export function ProjectsPage() {
               className={`grid md:grid-cols-2 gap-8 md:gap-12 items-center ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}
             >
               <div className={`relative overflow-hidden rounded-lg ${index % 2 === 1 ? 'md:order-2' : ''}`}>
-                <button
-                  type="button"
-                  onClick={() => openGallery(project.id)}
-                  className="aspect-[4/3] overflow-hidden block w-full text-left"
-                  aria-label={`Open gallery for ${project.title}`}
-                >
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
+                {project.galleryImages && project.galleryImages.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => openGallery(project.id)}
+                    className="aspect-[4/3] overflow-hidden block w-full text-left group relative"
+                    aria-label={`Open gallery for ${project.title}`}
+                  >
+                    {project.image && project.image.trim() !== '' ? (
+                      <>
+                        <img
+                          src={project.image}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium transition-opacity">
+                            View Gallery ({project.galleryImages.length} photos)
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                        <span className="text-white/50 text-sm">No Image Available</span>
+                      </div>
+                    )}
+                  </button>
+                ) : (
+                  <div className="aspect-[4/3] overflow-hidden">
+                    {project.image && project.image.trim() !== '' ? (
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                        <span className="text-white/50 text-sm">No Image Available</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className={index % 2 === 1 ? 'md:order-1 md:text-right' : ''}>

@@ -200,12 +200,18 @@ export function FeaturedProjects() {
                 }`}
               >
                 <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="project-image w-full h-full object-cover will-change-transform"
-                    loading="lazy"
-                  />
+                  {project.image && project.image.trim() !== '' ? (
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      className="project-image w-full h-full object-cover will-change-transform"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                      <span className="text-white/50 text-sm">No Image Available</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Viewfinder overlay */}

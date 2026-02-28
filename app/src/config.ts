@@ -112,14 +112,14 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "A peaceful religious & cultural service project with community participation.",
       ctaText: "More",
       href: "#",
-      image: "/projects/Sadaham Puja 2025/SadahamPuja01.jpeg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja01.jpeg",
       galleryImages: [
-        "/projects/Sadaham Puja 2025/SadahamPuja01.jpeg",
-        "/projects/Sadaham Puja 2025/SadahamPuja02.jpeg",
-        "/projects/Sadaham Puja 2025/SadahamPuja03.jpeg",
-        "/projects/Sadaham Puja 2025/SadahamPuja04.jpeg",
-        "/projects/Sadaham Puja 2025/SadahamPuja05.jpeg",
-        "/projects/Sadaham Puja 2025/SadahamPuja06.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja01.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja02.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja03.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja04.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja05.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/sadaham-puja-2025/sadahampuja06.jpeg",
       ],
     },
     {
@@ -131,21 +131,21 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Supporting underprivileged students by donating 1,000 CR books (120 pages).",
       ctaText: "More",
       href: "#",
-      image: "/projects/Senehe Piruna Pitu/202509090025441359396179.jpeg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202509090025441359396179.jpeg",
       galleryImages: [
-        "/projects/Senehe Piruna Pitu/202509090025441359396179.jpeg",
-        "/projects/Senehe Piruna Pitu/20250909114736638600007.jpeg",
-        "/projects/Senehe Piruna Pitu/20250909114833543531545.jpeg",
-        "/projects/Senehe Piruna Pitu/202509091153241455692918.jpeg",
-        "/projects/Senehe Piruna Pitu/202509091154452002035646.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092045521903323878.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092046391837341903.jpeg",
-        "/projects/Senehe Piruna Pitu/20251009204731781330478.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092107132468342.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092108021794907401.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092111141808225620.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092111311643513280.jpeg",
-        "/projects/Senehe Piruna Pitu/202510092112051064708016.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202509090025441359396179.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/20250909114736638600007.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/20250909114833543531545.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202509091153241455692918.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202509091154452002035646.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092045521903323878.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092046391837341903.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/20251009204731781330478.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092107132468342.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092108021794907401.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092111141808225620.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092111311643513280.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/senehe-piruna-pitu/202510092112051064708016.jpeg",
       ],
     },
     {
@@ -157,16 +157,16 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Formal installation ceremony of Leo Club ELITE 25 with leadership transition and recognition of outgoing members.",
       ctaText: "More",
       href: "#",
-      image: "/projects/ELITE 25/202510061423151722794723.jpeg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/hero-image.jpeg",
       galleryImages: [
-        "/projects/ELITE 25/202510061423151722794723.jpeg",
-        "/projects/ELITE 25/20251006142358729209400.jpeg",
-        "/projects/ELITE 25/20251006142438199798937.jpeg",
-        "/projects/ELITE 25/20251006142517328323101.jpeg",
-        "/projects/ELITE 25/202510061426051118596416.jpeg",
-        "/projects/ELITE 25/202510092040312028265676.jpeg",
-        "/projects/ELITE 25/202510092041142048999142.jpeg",
-        "/projects/ELITE 25/20251009204436256080095.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/hero-image.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/20251006142358729209400.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/20251006142438199798937.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/20251006142517328323101.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/202510061426051118596416.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/202510092040312028265676.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/202510092041142048999142.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/elite-25/20251009204436256080095.jpeg",
       ],
     },
     {
@@ -178,19 +178,19 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "International tree planting initiative supporting reforestation and environmental awareness across multiple Leo clubs.",
       ctaText: "More",
       href: "#",
-      image: "/projects/International Tree Plantation Drive/202601122006121190925964.jpeg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122006121190925964.jpeg",
       galleryImages: [
-        "/projects/International Tree Plantation Drive/202601122006121190925964.jpeg",
-        "/projects/International Tree Plantation Drive/20260112200737899589340.jpeg",
-        "/projects/International Tree Plantation Drive/202601122009211639179907.jpeg",
-        "/projects/International Tree Plantation Drive/202601122009391941820572.jpeg",
-        "/projects/International Tree Plantation Drive/20260112201117146957406.jpeg",
-        "/projects/International Tree Plantation Drive/202601122011471161910028.jpeg",
-        "/projects/International Tree Plantation Drive/202601122012131307866075.jpeg",
-        "/projects/International Tree Plantation Drive/202601122013451441891787.jpeg",
-        "/projects/International Tree Plantation Drive/20260112201435665349504.jpeg",
-        "/projects/International Tree Plantation Drive/20260112201535441753713.jpeg",
-        "/projects/International Tree Plantation Drive/202601152202091996883195.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122006121190925964.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/20260112200737899589340.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122009211639179907.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122009391941820572.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/20260112201117146957406.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122011471161910028.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122012131307866075.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601122013451441891787.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/20260112201435665349504.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/20260112201535441753713.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/international-tree-plantation-drive/202601152202091996883195.jpeg",
       ],
     },
     {
@@ -202,20 +202,20 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Flood relief donation drive supporting Sirasa Sahana Yathra to aid affected communities across Sri Lanka.",
       ctaText: "More",
       href: "#",
-      image: "/projects/Paradisaye Sahurda Yathra/202601122049011662332658.jpeg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049011662332658.jpeg",
       galleryImages: [
-        "/projects/Paradisaye Sahurda Yathra/202601122049011662332658.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/202601122049571431762039.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260112205202223714041.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/202601122052491670935903.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260112205440780965981.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260112205513186027367.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/202601152223061825038494.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260115222720309334382.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260115222737689942931.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260115223739144643106.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260115224205315589977.jpeg",
-        "/projects/Paradisaye Sahurda Yathra/20260115232414506820802.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049011662332658.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122049571431762039.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260112205202223714041.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601122052491670935903.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260112205440780965981.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260112205513186027367.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/202601152223061825038494.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260115222720309334382.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260115222737689942931.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260115223739144643106.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260115224205315589977.jpeg",
+        "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/projects/paradisaye-sahurda-yathra/20260115232414506820802.jpeg",
       ],
     },
     {
@@ -226,7 +226,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "The Bodhi Puja organized at Hunupitiya Gangarama Temple, aimed at seeking blessings for the Leoistic year 2024/2025. It brought together Leos, their families, and members from the Leo Club of Negombo Catamaran, fostering spiritual growth and community engagement.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/sadaham-puja-24.jpg"
+      image: "/project-1.jpg"
     },
     {
       id: 6,
@@ -236,7 +236,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "The Seth Pirith Pooja, held at the Temple of the Tooth Relic in Kandy, was organized to bless A/L students and the wider community. The spiritually enriching event fostered unity and provided participants with peace, motivation, and renewed strength.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/sadaham-puja-24-phase-02.jpg"
+      image: "/project-2.jpg"
     },
     {
       id: 7,
@@ -246,7 +246,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "The two orientation programmes held in July equipped both executive and general members with leadership skills and unity for the year ahead.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/orientation-programme.jpg"
+      image: "/project-3.jpg"
     },
     {
       id: 8,
@@ -256,7 +256,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "ELITE'24, held at Vidma Hall, Boralesgamuwa, was a milestone installation ceremony where the club's charter certificate was officially presented, marking a proud moment for Leo Club of Pannipitiya Paradise.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/elite-24.jpg"
+      image: "/project-1.jpg"
     },
     {
       id: 9,
@@ -266,7 +266,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "The Leo Club of Pannipitiya Paradise donated emulsion paint to enhance a classroom at Henry Steel Olcott Vidyalaya, improving the learning environment for students.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/pasalata-saviyak.jpg"
+      image: "/project-2.jpg"
     },
     {
       id: 10,
@@ -276,7 +276,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "At Ananda Samarakoon Vidyalaya, Wewala, Leos painted school benches and initiated volleyball court restoration, contributing to better facilities for students.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/pasalata-saviyak-phase-02.jpg"
+      image: "/project-3.jpg"
     },
     {
       id: 11,
@@ -286,7 +286,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "A successful service project at Sri Subhuthi National School, aimed at enhancing leadership skills and personal development among school's prefects through workshops and training sessions.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/path-to-lead-phase-01.jpg"
+      image: "/project-1.jpg"
     },
     {
       id: 12,
@@ -296,7 +296,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Held at Bonavista National College, Unawatuna, this two-day leadership and personality development program empowered prefects through workshops, training sessions, etiquette lessons, and drug prevention awareness.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/path-to-lead-phase-02.jpg"
+      image: "/project-2.jpg"
     },
     {
       id: 13,
@@ -306,7 +306,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Held at Camilla School, Mattegoda, and hosted with five other Leo Clubs, this was a compassionate and festive Inter District New Year celebration.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/senehase-avurudu.jpg"
+      image: "/project-3.jpg"
     },
     {
       id: 14,
@@ -316,7 +316,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "A compassionate Christmas visit to Apeksha Cancer Hospital in Maharagama, where donations for 100 children were distributed with the support of members, Lions, and Governor Lion Gaya Upasena.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/healing-hearts.jpg"
+      image: "/project-1.jpg"
     },
     {
       id: 15,
@@ -326,7 +326,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "A symbolic march bringing together Lions and Leos to raise awareness against child harassment, led by District Governor Lion Ranjith Fernando.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/walk-for-peace.jpg"
+      image: "/project-2.jpg"
     },
     { 
       id: 16,
@@ -336,7 +336,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "A compassionate initiative carried out in two phases, focusing on alleviating hunger among stray dogs through the preparation and distribution of specially made meal parcels.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/feed-the-paws.jpg"
+      image: "/project-3.jpg"
     },
     {
       id: 17,
@@ -346,7 +346,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Tree plantation project contributing to environmental conservation and sustainability in the local community.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/soba-2024.jpg"
+      image: "/project-1.jpg"
     },
     {
       id: 18,
@@ -356,7 +356,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "In collaboration with Leo Club of Diphu Aspire (Leo District 322 D), planted over 30 trees in members' neighborhoods, contributing to global sustainability while strengthening international Leo bonds.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/international-twinning-tree-plantation-drive-4-0.jpg"
+      image: "/project-2.jpg"
     },
     {
       id: 19,
@@ -366,7 +366,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Donated over 400 quality books to underserved army and pirivena libraries through Mr. Kalana Chandimal Wakista.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/book-donation-project.jpg"
+      image: "/project-3.jpg"
     },
     {
       id: 20,
@@ -376,7 +376,7 @@ export const featuredProjectsConfig: FeaturedProjectsConfig = {
         "Book donation project at Henry Olcott Maha Vidyalaya to support underprivileged students with essential educational materials, led by Co-Chairpersons Leo Hasindu Induwara and Leo Matheesha De Silva.",
       ctaText: "Read More",
       href: "#",
-      image: "/projects/igenumata-athwalak.jpg"
+      image: "/project-1.jpg"
     }
   ]
 };
@@ -508,28 +508,28 @@ export const testimonialsConfig: TestimonialsConfig = {
       id: 1,
       name: "Governor Lion Gaya Upasena",
       role: "District Governor for Lions District 306 D7 (2025/2026)",
-      image: "/Lion Gaya Upasena.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/lion-gaya-upasena.jpg",
       quote: "Being part of Leo Club has transformed my perspective on leadership. I've learned that true leadership is about serving others and creating positive change in our community.",
     },
     {
       id: 2,
       name: "Lion Ranjith Fernando",
       role: "Immediate Past District Governor for Lions District 306 C2 (2024/2025)",
-      image: "/Lion Ranjith Fernando.jpeg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/lion-ranjith-fernando.jpeg",
       quote: "The friendships I've made and the skills I've developed here are invaluable. Leo Club gave me the platform to turn my ideas into real community impact.",
     },
     {
       id: 3,
       name: "Lion Chamath C.Jayalath",
       role: "Club President of Lions Club of Pannipitiya Paradise",
-      image: "/Chamath Jayalath.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/chamath-jayalath.jpg",
       quote: "From organizing health camps to environmental projects, every experience has been rewarding. I'm proud to be part of an organization that truly cares.",
     },
     {
       id: 4,
       name: "Leo Lion Lithira Ramuditha",
       role: "Immediate Past President of Leo Club of Pannipitiya Paradise",
-      image: "/Lithira Ramuditha.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/lithira-ramuditha.jpg",
       quote: "Leo Club taught me the value of teamwork and dedication. Working with passionate young people toward common goals has been an incredible journey.",
     },
   ],
@@ -632,7 +632,7 @@ export const boardMembersConfig: BoardMembersConfig = {
       id: 2,
       role: "1st Vice President",
       name: "Leo Janith Vishula",
-      image: "/Janith Vishula.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/janith-vishula.jpg",
       imageAlt: "Leo Janith Vishula",
       cvLink: "#",
       contactNumber: "Not provided",
@@ -684,7 +684,7 @@ export const boardMembersConfig: BoardMembersConfig = {
       id: 6,
       role: "Treasurer",
       name: "Leo Hasindu Induwara",
-      image: "/Hasindu Induwara.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/hasindu-induwara.jpg",
       imageAlt: "Leo Hasindu Induwara",
       cvLink: "#",
       contactNumber: "Not provided",
@@ -697,7 +697,7 @@ export const boardMembersConfig: BoardMembersConfig = {
       id: 7,
       role: "Advisor",
       name: "Lion Chamath C Jayalath",
-      image: "/Chamath Jayalath.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/chamath-jayalath.jpg",
       imageAlt: "Lion Chamath C Jayalath",
       cvLink: "#",
       contactNumber: "Not provided",
@@ -710,7 +710,7 @@ export const boardMembersConfig: BoardMembersConfig = {
       id: 8,
       role: "Immediate Past President",
       name: "Leo Lion Lithira Ramuditha",
-      image: "/Lithira Ramuditha.jpg",
+      image: "https://cyffuhudigwapmkffqes.supabase.co/storage/v1/object/public/images/members/lithira-ramuditha.jpg",
       imageAlt: "Leo Lion Lithira Ramuditha",
       cvLink: "#",
       contactNumber: "Not provided",
@@ -796,7 +796,7 @@ export const achievementsConfig: AchievementsConfig = {
   projectAwards: [
     {
       title: "RESILENCIA'24",
-      image: "",
+      image: undefined,
       imageAlt: "RESILENCIA'24 award",
       details: [
         "Most Outstanding New Leo Club - 1st Runners Up",
@@ -804,7 +804,7 @@ export const achievementsConfig: AchievementsConfig = {
     },
     {
       title: "RESILENCIA'25",
-      image: "",
+      image: undefined,
       imageAlt: "RESILENCIA'25 awards",
       details: [
         "Winner 🥇 - Best Project for Youth: Path to Lead",
@@ -816,7 +816,7 @@ export const achievementsConfig: AchievementsConfig = {
   individualAwards: [
     {
       title: "Most Popular Leo",
-      image: "",
+      image: undefined,
       imageAlt: "Most Popular Leo award",
       details: [
         "Leo Lion Thavisha Banadara",
@@ -824,7 +824,7 @@ export const achievementsConfig: AchievementsConfig = {
     },
     {
       title: "Best Leo Advisor - 1st Runners Up",
-      image: "",
+      image: undefined,
       imageAlt: "Best Leo Advisor award",
       details: [
         "Lion Chamath C. Jayalath",
@@ -832,7 +832,7 @@ export const achievementsConfig: AchievementsConfig = {
     },
     {
       title: "District President Appreciation Award",
-      image: "",
+      image: undefined,
       imageAlt: "District President Appreciation Award",
       details: [
         "Leo Lion Lithira Ramuditha",
@@ -841,7 +841,7 @@ export const achievementsConfig: AchievementsConfig = {
     },
     {
       title: "Most Outstanding Club Presidents Top 20",
-      image: "",
+      image: undefined,
       imageAlt: "Most Outstanding Club Presidents Top 20",
       details: [
         "Leo Lion Lithira Ramuditha",

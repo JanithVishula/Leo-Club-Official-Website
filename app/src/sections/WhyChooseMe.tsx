@@ -189,13 +189,19 @@ export function WhyChooseMe() {
           {whyChooseMeConfig.featureCards.map((card, index) => (
             <div key={index} className="feature-card-image opacity-0 group">
               <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-slate-900">
-                <img
-                  src={card.image}
-                  alt={card.imageAlt}
-                  className="w-full h-full object-cover will-change-transform"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-transparent to-transparent" />
+                {card.image && card.image.trim() !== '' ? (
+                  <>
+                    <img
+                      src={card.image}
+                      alt={card.imageAlt}
+                      className="w-full h-full object-cover will-change-transform"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-transparent to-transparent" />
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-950 to-slate-900" />
+                )}
                 <div className="absolute bottom-6 left-6 right-6">
                   <p className="text-white/90 font-sans font-semibold text-lg mb-2">
                     {card.title}

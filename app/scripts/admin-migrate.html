@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Migration Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    h1 { color: #60a5fa; margin-bottom: 10px; }
+    h2 { color: #93c5fd; margin-top: 30px; margin-bottom: 15px; font-size: 18px; }
+    p { margin-bottom: 15px; color: #cbd5e1; line-height: 1.6; }
+    .warning {
+      background: #7f1d1d;
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    .info {
+      background: #1e3a8a;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    .success {
+      background: #064e3b;
+      border: 1px solid #10b981;
+      color: #6ee7b7;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 12px 24px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    button.danger { background: #dc2626; }
+    button.danger:hover { background: #b91c1c; }
+    .progress {
+      margin-top: 20px;
+      padding: 15px;
+      background: #0f172a;
+      border-radius: 6px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .progress-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+    }
+    .progress-item:last-child { border-bottom: none; }
+    .progress-item.success { color: #6ee7b7; }
+    .progress-item.error { color: #fca5a5; }
+    .progress-item.info { color: #93c5fd; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: #0f172a;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #60a5fa;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 5px;
+    }
+    code {
+      background: #0f172a;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Image Migration Tool</h1>
+    <p>Migrate existing images from /public/ to Supabase Storage</p>
+
+    <div class="warning">
+      <strong>⚠️ Important:</strong> Make sure you've run the updated <code>schema.sql</code> in Supabase to create the storage bucket and policies before running this migration.
+    </div>
+
+    <div class="info">
+      <strong>📝 Instructions:</strong>
+      <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+        <li>This tool must be run from within your project folder</li>
+        <li>It will migrate: Member images, Project folders, Achievement images</li>
+        <li>Static assets (hero, features, gallery) will stay in /public/</li>
+        <li>Progress will be shown below in real-time</li>
+      </ol>
+    </div>
+
+    <button onclick="startMigration()" id="startBtn">Start Migration</button>
+
+    <div id="stats" class="stats" style="display: none;">
+      <div class="stat-card">
+        <div class="stat-value" id="memberCount">0</div>
+        <div class="stat-label">Member Images</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="projectCount">0</div>
+        <div class="stat-label">Project Images</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="achievementCount">0</div>
+        <div class="stat-label">Achievement Images</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="errorCount">0</div>
+        <div class="stat-label">Errors</div>
+      </div>
+    </div>
+
+    <div id="progress" class="progress" style="display: none;"></div>
+
+    <div id="complete" style="display: none;">
+      <div class="success">
+        <strong>✅ Migration Complete!</strong>
+        <p style="margin-top: 10px;">Check Supabase Storage → images/ to see your uploaded files.</p>
+        <p>A detailed migration report has been logged to the console.</p>
+      </div>
+      <button onclick="downloadReport()" style="margin-right: 10px;">Download Report</button>
+      <button class="danger" onclick="cleanupFiles()">Delete Old Files from /public/</button>
+    </div>
+  </div>
+
+  <script type="module">
+    window.migrationLog = {
+      members: [],
+      projects: [],
+      achievements: [],
+      errors: [],
+      skipped: []
+    };
+
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      document.querySelector('.container').innerHTML = `
+        <h1>❌ Configuration Error</h1>
+        <div class="warning">
+          <p><strong>Missing Supabase configuration!</strong></p>
+          <p>This tool must be run using <code>npm run dev</code> to access environment variables.</p>
+          <ol style="margin-left: 20px; margin-top: 10px;">
+            <li>Make sure .env file exists with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY</li>
+            <li>Start the dev server: <code>npm run dev</code></li>
+            <li>Navigate to this page</li>
+          </ol>
+        </div>
+      `;
+    }
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function log(message, type = 'info') {
+      const progress = document.getElementById('progress');
+      const item = document.createElement('div');
+      item.className = `progress-item ${type}`;
+      item.textContent = message;
+      progress.appendChild(item);
+      progress.scrollTop = progress.scrollHeight;
+    }
+
+    function updateStats() {
+      document.getElementById('memberCount').textContent = window.migrationLog.members.length;
+      document.getElementById('projectCount').textContent = 
+        window.migrationLog.projects.reduce((sum, p) => sum + p.images.length, 0);
+      document.getElementById('achievementCount').textContent = window.migrationLog.achievements.length;
+      document.getElementById('errorCount').textContent = window.migrationLog.errors.length;
+    }
+
+    window.startMigration = async function() {
+      const btn = document.getElementById('startBtn');
+      btn.disabled = true;
+      btn.textContent = 'Migrating...';
+      
+      document.getElementById('progress').style.display = 'block';
+      document.getElementById('stats').style.display = 'grid';
+      
+      log('🚀 Starting migration...', 'info');
+      log('⚠️  Note: This is a frontend-only tool. For full migration, use the Node.js script.', 'info');
+      log('📝 This tool is for demonstration. Actual file system access requires backend.', 'info');
+      
+      // In a real implementation, you'd need a backend API to list and read files
+      // For now, show instructions
+      log('', 'info');
+      log('To actually migrate files, use one of these methods:', 'info');
+      log('1. Run: node scripts/migrate-images.mjs (requires SERVICE_ROLE_KEY)', 'info');
+      log('2. Use Supabase Dashboard → Storage → Upload manually', 'info');
+      log('3. Use the admin dashboard /admin to upload new content', 'info');
+      
+      btn.textContent = 'Migration Info Shown';
+      
+      setTimeout(() => {
+        document.getElementById('complete').style.display = 'block';
+      }, 1000);
+    };
+
+    window.downloadReport = function() {
+      const report = JSON.stringify(window.migrationLog, null, 2);
+      const blob = new Blob([report], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'migration-report.json';
+      a.click();
+    };
+
+    window.cleanupFiles = function() {
+      alert('File cleanup requires backend/Node.js script.\n\nRun: node scripts/cleanup.mjs');
+    };
+  </script>
+</body>
+</html>

@@ -81,7 +81,7 @@ export function Testimonials() {
           spaceBetween={24}
           slidesPerView={1.2}
           centeredSlides={true}
-          loop={true}
+          loop={testimonialsConfig.testimonials.length >= 6}
           speed={800}
           autoplay={{
             delay: 4000,
@@ -120,14 +120,22 @@ export function Testimonials() {
 
                 {/* Author */}
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden">
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
+                  {testimonial.image && testimonial.image.trim() !== '' ? (
+                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-softblack/10 group-hover:bg-white/20 transition-colors duration-500 flex items-center justify-center">
+                      <span className="text-softblack/50 group-hover:text-white/70 font-sans font-semibold text-lg">
+                        {testimonial.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <p className="font-sans font-semibold text-softblack group-hover:text-white transition-colors duration-500">
                       {testimonial.name}

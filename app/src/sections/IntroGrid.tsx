@@ -191,21 +191,29 @@ export function IntroGrid() {
                 index === 0 ? 'md:col-span-1 md:row-span-2' : ''
               } ${index === 3 ? 'row-span-2' : ''}`}
             >
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="w-full h-full object-cover will-change-transform"
-                loading="lazy"
-              />
+              {image.src && image.src.trim() !== '' ? (
+                <>
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover will-change-transform"
+                    loading="lazy"
+                  />
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-blue-950/0 group-hover:bg-blue-950/30 transition-colors duration-500" />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-blue-950/0 group-hover:bg-blue-950/30 transition-colors duration-500" />
 
-              {/* Viewfinder corners on hover */}
-              <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
-              <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
-              <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
-              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
+                  {/* Viewfinder corners on hover */}
+                  <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
+                  <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
+                  <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
+                  <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-white/0 group-hover:border-white/80 transition-all duration-500" />
+                </>
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                  <span className="text-white/50 text-sm">No Image</span>
+                </div>
+              )}
             </div>
           ))}
         </div>

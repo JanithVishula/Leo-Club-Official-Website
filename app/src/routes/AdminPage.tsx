@@ -19,6 +19,7 @@ import {
   type MembershipApplicationRecord,
 } from '../lib/cmsApi';
 import { adminEmail, isSupabaseConfigured } from '../lib/supabase';
+import { uploadImage, uploadMultipleImages } from '../lib/storageApi';
 
 type AdminTab = 'applications' | 'projects' | 'achievements';
 
@@ -58,6 +59,12 @@ export function AdminPage() {
     imageAlt: '',
     displayOrder: 0,
   });
+
+  // File upload states
+  const [projectMainImage, setProjectMainImage] = useState<File | null>(null);
+  const [projectGalleryImages, setProjectGalleryImages] = useState<File[]>([]);
+  const [achievementImage, setAchievementImage] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState('');
 
   const loadDashboardData = async () => {
     setErrorMessage('');
@@ -156,23 +163,46 @@ export function AdminPage() {
     event.preventDefault();
     setBusyMessage('Adding project...');
     setErrorMessage('');
+    setUploadProgress('');
     try {
-      const galleryImages = projectForm.galleryImagesText
-        .split('\n')
-        .map((item) => item.trim())
-        .filter(Boolean);
+      let imageUrl = projectForm.imageUrl.trim();
+      let galleryImages: string[] = [];
 
+      // Upload main image if file selected
+      if (projectMainImage) {
+        setUploadProgress('Uploading main image...');
+        imageUrl = await uploadImage(projectMainImage, 'projects');
+      }
+
+      // Upload gallery images if files selected
+      if (projectGalleryImages.length > 0) {
+        setUploadProgress(`Uploading ${projectGalleryImages.length} gallery images...`);
+        galleryImages = await uploadMultipleImages(projectGalleryImages, 'projects');
+      } else {
+        // Fallback to text input
+        galleryImages = projectForm.galleryImagesText
+          .split('\n')
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      if (!imageUrl) {
+        throw new Error('Please provide a main image (file or URL)');
+      }
+
+      setUploadProgress('Creating project...');
       await createProjectAdmin({
         title: projectForm.title.trim(),
         dateText: projectForm.dateText.trim(),
         category: projectForm.category.trim(),
         description: projectForm.description.trim(),
-        imageUrl: projectForm.imageUrl.trim(),
+        imageUrl,
         galleryImages,
         isFeatured: projectForm.isFeatured,
         displayOrder: Number(projectForm.displayOrder || 0),
       });
 
+      // Reset form
       setProjectForm({
         title: '',
         dateText: '',
@@ -183,6 +213,8 @@ export function AdminPage() {
         isFeatured: true,
         displayOrder: 0,
       });
+      setProjectMainImage(null);
+      setProjectGalleryImages([]);
 
       await loadDashboardData();
     } catch (error) {
@@ -190,6 +222,7 @@ export function AdminPage() {
       setErrorMessage(message);
     } finally {
       setBusyMessage('');
+      setUploadProgress('');
     }
   };
 
@@ -197,21 +230,32 @@ export function AdminPage() {
     event.preventDefault();
     setBusyMessage('Adding achievement...');
     setErrorMessage('');
+    setUploadProgress('');
     try {
+      let imageUrl = achievementForm.imageUrl.trim();
+
+      // Upload image if file selected
+      if (achievementImage) {
+        setUploadProgress('Uploading image...');
+        imageUrl = await uploadImage(achievementImage, 'achievements');
+      }
+
       const details = achievementForm.detailsText
         .split('\n')
         .map((item) => item.trim())
         .filter(Boolean);
 
+      setUploadProgress('Creating achievement...');
       await createAchievementAdmin({
         category: achievementForm.category,
         title: achievementForm.title.trim(),
         details,
-        imageUrl: achievementForm.imageUrl.trim(),
+        imageUrl,
         imageAlt: achievementForm.imageAlt.trim(),
         displayOrder: Number(achievementForm.displayOrder || 0),
       });
 
+      // Reset form
       setAchievementForm({
         category: 'project',
         title: '',
@@ -220,6 +264,7 @@ export function AdminPage() {
         imageAlt: '',
         displayOrder: 0,
       });
+      setAchievementImage(null);
 
       await loadDashboardData();
     } catch (error) {
@@ -227,6 +272,7 @@ export function AdminPage() {
       setErrorMessage(message);
     } finally {
       setBusyMessage('');
+      setUploadProgress('');
     }
   };
 
@@ -369,6 +415,12 @@ export function AdminPage() {
           </div>
         )}
 
+        {uploadProgress && (
+          <div className="mb-4 rounded-md border border-purple-300/30 bg-purple-900/20 p-3 text-purple-100 text-sm">
+            📤 {uploadProgress}
+          </div>
+        )}
+
         {errorMessage && (
           <div className="mb-4 rounded-md border border-red-300/30 bg-red-900/20 p-3 text-red-100 text-sm">
             {errorMessage}
@@ -403,8 +455,79 @@ export function AdminPage() {
               <TextField label="Date" value={projectForm.dateText} onChange={(value) => setProjectForm((prev) => ({ ...prev, dateText: value }))} />
               <TextField label="Category" value={projectForm.category} onChange={(value) => setProjectForm((prev) => ({ ...prev, category: value }))} />
               <TextAreaField label="Description" value={projectForm.description} onChange={(value) => setProjectForm((prev) => ({ ...prev, description: value }))} rows={4} />
-              <TextField label="Main Image URL" value={projectForm.imageUrl} onChange={(value) => setProjectForm((prev) => ({ ...prev, imageUrl: value }))} />
-              <TextAreaField label="Gallery Image URLs (one per line)" value={projectForm.galleryImagesText} onChange={(value) => setProjectForm((prev) => ({ ...prev, galleryImagesText: value }))} rows={4} />
+              
+              <div className="space-y-2">
+                <label className="block text-white/80 text-sm font-medium">Main Image</label>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Upload Image (recommended)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setProjectMainImage(file);
+                          setProjectForm((prev) => ({ ...prev, imageUrl: '' })); // Clear URL if file selected
+                        }
+                      }}
+                      className="w-full text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-slate-950 file:font-semibold hover:file:bg-white/90"
+                    />
+                    {projectMainImage && <p className="text-green-400 text-xs mt-1">✓ {projectMainImage.name}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Or enter URL</label>
+                    <input
+                      type="text"
+                      value={projectForm.imageUrl}
+                      onChange={(e) => {
+                        setProjectForm((prev) => ({ ...prev, imageUrl: e.target.value }));
+                        if (e.target.value) setProjectMainImage(null); // Clear file if URL entered
+                      }}
+                      placeholder="https://..."
+                      className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 px-3 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-white/80 text-sm font-medium">Gallery Images</label>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Upload Multiple Images (recommended)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 0) {
+                          setProjectGalleryImages(files);
+                          setProjectForm((prev) => ({ ...prev, galleryImagesText: '' })); // Clear URLs if files selected
+                        }
+                      }}
+                      className="w-full text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-slate-950 file:font-semibold hover:file:bg-white/90"
+                    />
+                    {projectGalleryImages.length > 0 && (
+                      <p className="text-green-400 text-xs mt-1">✓ {projectGalleryImages.length} image{projectGalleryImages.length > 1 ? 's' : ''} selected</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Or enter URLs (one per line)</label>
+                    <textarea
+                      value={projectForm.galleryImagesText}
+                      onChange={(e) => {
+                        setProjectForm((prev) => ({ ...prev, galleryImagesText: e.target.value }));
+                        if (e.target.value) setProjectGalleryImages([]); // Clear files if URLs entered
+                      }}
+                      rows={3}
+                      placeholder="https://image1.jpg&#10;https://image2.jpg"
+                      className="w-full rounded-md border border-white/20 bg-slate-950/60 px-3 py-2 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <label className="text-white/80 text-sm">
                   <span className="block mb-2">Display Order</span>
@@ -465,8 +588,43 @@ export function AdminPage() {
               </label>
               <TextField label="Title" value={achievementForm.title} onChange={(value) => setAchievementForm((prev) => ({ ...prev, title: value }))} />
               <TextAreaField label="Details (one line per bullet)" value={achievementForm.detailsText} onChange={(value) => setAchievementForm((prev) => ({ ...prev, detailsText: value }))} rows={4} />
-              <TextField label="Image URL" value={achievementForm.imageUrl} onChange={(value) => setAchievementForm((prev) => ({ ...prev, imageUrl: value }))} />
-              <TextField label="Image Alt" value={achievementForm.imageAlt} onChange={(value) => setAchievementForm((prev) => ({ ...prev, imageAlt: value }))} />
+              
+              <div className="space-y-2">
+                <label className="block text-white/80 text-sm font-medium">Achievement Image</label>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Upload Image (recommended)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAchievementImage(file);
+                          setAchievementForm((prev) => ({ ...prev, imageUrl: '' }));
+                        }
+                      }}
+                      className="w-full text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-slate-950 file:font-semibold hover:file:bg-white/90"
+                    />
+                    {achievementImage && <p className="text-green-400 text-xs mt-1">✓ {achievementImage.name}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Or enter URL</label>
+                    <input
+                      type="text"
+                      value={achievementForm.imageUrl}
+                      onChange={(e) => {
+                        setAchievementForm((prev) => ({ ...prev, imageUrl: e.target.value }));
+                        if (e.target.value) setAchievementImage(null);
+                      }}
+                      placeholder="https://..."
+                      className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 px-3 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <TextField label="Image Alt Text" value={achievementForm.imageAlt} onChange={(value) => setAchievementForm((prev) => ({ ...prev, imageAlt: value }))} />
               <label className="block text-white/80 text-sm">
                 <span className="block mb-2">Display Order</span>
                 <input
