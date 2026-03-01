@@ -13,7 +13,7 @@ import { useFAQs } from '../hooks/useFAQs';
 gsap.registerPlugin(ScrollTrigger);
 
 export function FAQ() {
-  const { faqs, loading } = useFAQs();
+  const { faqs } = useFAQs();
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const accordionRef = useRef<HTMLDivElement>(null);

@@ -18,7 +18,7 @@ export function Testimonials() {
   const headerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   
-  const { testimonials, loading } = useTestimonials();
+  const { testimonials } = useTestimonials();
   
   const hasTestimonialsContent =
     !!testimonialsConfig.titleRegular || testimonials.length > 0;
