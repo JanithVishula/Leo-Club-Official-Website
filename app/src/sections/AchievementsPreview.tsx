@@ -13,48 +13,6 @@ export function AchievementsPreview() {
   const headerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: headerRef.current,
-        start: 'top 85%',
-        onEnter: () => {
-          gsap.fromTo(
-            headerRef.current,
-            { y: 40, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out' }
-          );
-        },
-        once: true,
-      });
-
-      const cards = gridRef.current?.querySelectorAll('.award-card');
-      if (cards) {
-        ScrollTrigger.create({
-          trigger: gridRef.current,
-          start: 'top 85%',
-          onEnter: () => {
-            gsap.set(cards, { opacity: 1 });
-            gsap.fromTo(
-              cards,
-              { y: 34, clipPath: 'inset(10% 4% 10% 4%)' },
-              {
-                y: 0,
-                clipPath: 'inset(0% 0% 0% 0%)',
-                duration: 1,
-                ease: 'power3.out',
-                stagger: 0.12,
-              }
-            );
-          },
-          once: true,
-        });
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
   const [featuredAchievements, setFeaturedAchievements] = useState<CmsAchievementRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,6 +31,51 @@ export function AchievementsPreview() {
 
     loadAchievements();
   }, []);
+
+  // Setup GSAP animations after achievements load
+  useEffect(() => {
+    if (loading) return; // Wait for data to load
+
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: headerRef.current,
+        start: 'top 85%',
+        onEnter: () => {
+          gsap.fromTo(
+            headerRef.current,
+            { y: 40, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out' }
+          );
+        },
+        once: true,
+      });
+
+      const cards = gridRef.current?.querySelectorAll('.award-card');
+      if (cards && cards.length > 0) {
+        ScrollTrigger.create({
+          trigger: gridRef.current,
+          start: 'top 85%',
+          onEnter: () => {
+            gsap.fromTo(
+              cards,
+              { y: 34, opacity: 0, clipPath: 'inset(10% 4% 10% 4%)' },
+              {
+                y: 0,
+                opacity: 1,
+                clipPath: 'inset(0% 0% 0% 0%)',
+                duration: 1,
+                ease: 'power3.out',
+                stagger: 0.12,
+              }
+            );
+          },
+          once: true,
+        });
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [loading, featuredAchievements.length]);
 
   // Build award cards from featured achievements (only show what's actually featured)
   const awardCards = featuredAchievements.length > 0 
@@ -132,31 +135,42 @@ export function AchievementsPreview() {
         </div>
 
         <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-6 auto-rows-[180px] md:auto-rows-[190px] gap-4 md:gap-6">
-          {awardCards.map((card, index) => (
-            <article
-              key={`${card.title}-${index}`}
-              className={`award-card relative overflow-hidden rounded-lg opacity-0 ${card.sizeClass}`}
-            >
-              {card.image ? (
-                <img
-                  src={card.image}
-                  alt={card.imageAlt}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-white to-softblack/10" />
-              )}
+          {loading ? (
+            <div className="col-span-full flex items-center justify-center py-12">
+              <p className="text-softblack/50 text-sm">Loading achievements...</p>
+            </div>
+          ) : awardCards.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-softblack/70 text-sm mb-2">No featured achievements yet</p>
+              <p className="text-softblack/50 text-xs">Add achievements from the admin panel</p>
+            </div>
+          ) : (
+            awardCards.map((card, index) => (
+              <article
+                key={`${card.title}-${index}`}
+                className={`award-card relative overflow-hidden rounded-lg ${card.sizeClass}`}
+              >
+                {card.image ? (
+                  <img
+                    src={card.image}
+                    alt={card.imageAlt}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-white to-softblack/10" />
+                )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-softblack/75 via-softblack/25 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-softblack/75 via-softblack/25 to-transparent" />
 
-              <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 text-white">
-                <p className="text-[10px] md:text-xs uppercase tracking-widest text-white/75 font-body mb-1">Award Highlight</p>
-                <h3 className="font-sans font-semibold text-sm md:text-base leading-tight">{card.title}</h3>
-                <p className="font-body text-xs md:text-sm text-white/85 mt-2 line-clamp-3">{card.caption}</p>
-              </div>
-            </article>
-          ))}
+                <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 text-white">
+                  <p className="text-[10px] md:text-xs uppercase tracking-widest text-white/75 font-body mb-1">Award Highlight</p>
+                  <h3 className="font-sans font-semibold text-sm md:text-base leading-tight">{card.title}</h3>
+                  <p className="font-body text-xs md:text-sm text-white/85 mt-2 line-clamp-3">{card.caption}</p>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </div>
     </section>
