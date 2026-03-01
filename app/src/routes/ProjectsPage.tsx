@@ -64,29 +64,48 @@ export function ProjectsPage() {
 
   useEffect(() => {
     const loadProjects = async () => {
-      const remoteProjects = await listProjectsPublic();
+      try {
+        const remoteProjects = await listProjectsPublic();
+        console.log('Fetched projects:', remoteProjects);
 
-      const mapped = remoteProjects.map((item, index) => ({
-        id: 10000 + index,
-        title: item.title,
-        date: item.dateText,
-        image: item.imageUrl,
-        description: item.description,
-        ctaText: 'Read More',
-        href: '#',
-        category: item.category || undefined,
-        galleryImages: item.galleryImages,
-      }));
+        const mapped = remoteProjects.map((item, index) => ({
+          id: 10000 + index,
+          title: item.title,
+          date: item.dateText,
+          projectId: item.projectId,
+          image: item.imageUrl,
+          description: item.description,
+          ctaText: 'Read More',
+          href: '#',
+          category: item.category || undefined,
+          galleryImages: item.galleryImages,
+        }));
 
-      setProjects(mapped);
+        console.log('Mapped projects:', mapped);
+        setProjects(mapped);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+      }
     };
 
     loadProjects();
   }, []);
 
-  const sortedProjects = [...projects].sort(
-    (a, b) => parseProjectDateToTimestamp(b.date) - parseProjectDateToTimestamp(a.date)
-  );
+  // Sort by project_id (descending - latest first)
+  // Projects with project_id come first, sorted by ID
+  // Projects without project_id come last, sorted by parsed date
+  const sortedProjects = [...projects].sort((a, b) => {
+    // If both have project IDs, sort by project ID (descending)
+    if (a.projectId && b.projectId) {
+      return b.projectId.localeCompare(a.projectId);
+    }
+    // If only a has project ID, a comes first
+    if (a.projectId) return -1;
+    // If only b has project ID, b comes first
+    if (b.projectId) return 1;
+    // If neither has project ID, sort by parsed date
+    return parseProjectDateToTimestamp(b.date) - parseProjectDateToTimestamp(a.date);
+  });
 
   const activeProject = activeProjectId !== null
     ? sortedProjects.find((project) => project.id === activeProjectId) || null
@@ -153,12 +172,18 @@ export function ProjectsPage() {
           </Link>
         </div>
 
-        <div className="space-y-20 md:space-y-24">
-          {sortedProjects.map((project, index) => (
-            <div
-              key={project.id}
-              className={`grid md:grid-cols-2 gap-8 md:gap-12 items-center ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}
-            >
+        {sortedProjects.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-white/60 text-lg mb-2">No projects available yet.</p>
+            <p className="text-white/40 text-sm">Projects added by the admin will appear here.</p>
+          </div>
+        ) : (
+          <div className="space-y-20 md:space-y-24">
+            {sortedProjects.map((project, index) => (
+              <div
+                key={project.id}
+                className={`grid md:grid-cols-2 gap-8 md:gap-12 items-center ${index % 2 === 1 ? 'md:flex-row-reverse' : ''}`}
+              >
               <div className={`relative overflow-hidden rounded-lg ${index % 2 === 1 ? 'md:order-2' : ''}`}>
                 {project.galleryImages && project.galleryImages.length > 1 ? (
                   <button
@@ -233,7 +258,8 @@ export function ProjectsPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {activeProject && activeImages.length > 0 && (

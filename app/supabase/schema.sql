@@ -32,6 +32,8 @@ create table if not exists public.projects (
   gallery_images jsonb not null default '[]'::jsonb,
   is_featured boolean not null default true,
   display_order int not null default 0,
+  project_id text,
+  completion_date date,
   created_at timestamptz not null default now()
 );
 
@@ -117,6 +119,22 @@ create table if not exists public.site_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.homepage_featured_projects (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  display_order int not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.homepage_featured_achievements (
+  id uuid primary key default gen_random_uuid(),
+  achievement_id uuid not null references public.achievements(id) on delete cascade,
+  display_order int not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- =========================
 -- ENABLE RLS
 -- =========================
@@ -131,6 +149,8 @@ alter table public.services enable row level security;
 alter table public.feature_cards enable row level security;
 alter table public.portfolio_images enable row level security;
 alter table public.site_settings enable row level security;
+alter table public.homepage_featured_projects enable row level security;
+alter table public.homepage_featured_achievements enable row level security;
 
 -- =========================
 -- DROP OLD POLICIES (SAFE)
@@ -157,6 +177,10 @@ drop policy if exists "public read portfolio_images" on public.portfolio_images;
 drop policy if exists "admin manage portfolio_images" on public.portfolio_images;
 drop policy if exists "public read site_settings" on public.site_settings;
 drop policy if exists "admin manage site_settings" on public.site_settings;
+drop policy if exists "public read homepage_featured_projects" on public.homepage_featured_projects;
+drop policy if exists "public read homepage_featured_achievements" on public.homepage_featured_achievements;
+drop policy if exists "admin manage homepage_featured_achievements" on public.homepage_featured_achievements;
+drop policy if exists "admin manage homepage_featured_projects" on public.homepage_featured_projects;
 
 -- =========================
 -- PUBLIC POLICIES
@@ -287,6 +311,30 @@ for all
 using (auth.email() = 'jvishula.work@gmail.com')
 with check (auth.email() = 'jvishula.work@gmail.com');
 
+create policy "public read homepage_featured_projects"
+on public.homepage_featured_projects
+for select
+using (true);
+
+create policy "admin manage homepage_featured_projects"
+on public.homepage_featured_projects
+for all
+using (auth.email() = 'jvishula.work@gmail.com')
+with check (auth.email() = 'jvishula.work@gmail.com');
+
+create policy "public read homepage_featured_achievements"
+on public.homepage_featured_achievements
+for select
+using (true);
+
+create policy "admin manage homepage_featured_achievements"
+on public.homepage_featured_achievements
+for all
+using (auth.email() = 'jvishula.work@gmail.com')
+with check (auth.email() = 'jvishula.work@gmail.com');
+
+with check (auth.email() = 'jvishula.work@gmail.com');
+
 -- =========================
 -- STORAGE BUCKET SETUP
 -- =========================
@@ -359,6 +407,8 @@ using (
 create index if not exists idx_board_members_order on public.board_members(display_order);
 create index if not exists idx_testimonials_order on public.testimonials(display_order);
 create index if not exists idx_faqs_order on public.faqs(display_order);
+create unique index if not exists idx_homepage_featured_unique_achievement on public.homepage_featured_achievements(achievement_id);
+create index if not exists idx_homepage_featured_achievements_order on public.homepage_featured_achievements(display_order);
 create index if not exists idx_services_order on public.services(display_order);
 create index if not exists idx_feature_cards_order on public.feature_cards(display_order);
 create index if not exists idx_portfolio_images_order on public.portfolio_images(display_order);
@@ -368,6 +418,103 @@ create index if not exists idx_board_members_active on public.board_members(is_a
 create index if not exists idx_testimonials_active on public.testimonials(is_active);
 create index if not exists idx_faqs_active on public.faqs(is_active);
 create index if not exists idx_services_active on public.services(is_active);
+create index if not exists idx_projects_project_id on public.projects(project_id);
+create index if not exists idx_projects_completion_date on public.projects(completion_date desc);
+create index if not exists idx_homepage_featured_unique_project on public.homepage_featured_projects(project_id);
+create index if not exists idx_homepage_featured_order on public.homepage_featured_projects(display_order);
+
+-- =========================
+-- DATABASE FUNCTIONS
+-- =========================
+
+-- Function to generate project IDs in format YYYYMMDD-XXX
+create or replace function generate_project_id(p_completion_date date)
+returns text as $$
+declare
+  date_prefix text;
+  next_sequence int;
+  result_id text;
+begin
+  if p_completion_date is null then
+    return null;
+  end if;
+  
+  -- Format date as YYYYMMDD
+  date_prefix := to_char(p_completion_date, 'YYYYMMDD');
+  
+  -- Find the highest sequence number for this date
+  select coalesce(
+    max(
+      cast(
+        substring(project_id from '\d{8}-(\d{3})') as int
+      )
+    ), 0
+  ) + 1
+  into next_sequence
+  from public.projects
+  where project_id like date_prefix || '-%';
+  
+  -- Format sequence as 3-digit number
+  result_id := date_prefix || '-' || lpad(next_sequence::text, 3, '0');
+  
+  return result_id;
+end;
+$$ language plpgsql;
+
+-- Function to auto-generate project_id on insert
+create or replace function auto_generate_project_id()
+returns trigger as $$
+begin
+  if new.completion_date is not null and (new.project_id is null or new.project_id = '') then
+    new.project_id := generate_project_id(new.completion_date);
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+-- Function to update updated_at timestamp
+create or replace function update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+-- =========================
+-- DATABASE TRIGGERS
+-- =========================
+
+-- Trigger to update homepage_featured_achievements updated_at
+drop trigger if exists update_homepage_featured_achievements_updated_at on public.homepage_featured_achievements;
+create trigger update_homepage_featured_achievements_updated_at
+  before update on public.homepage_featured_achievements
+  for each row
+  execute function update_updated_at_column();
+
+-- Trigger to auto-generate project_id
+drop trigger if exists trigger_auto_generate_project_id on public.projects;
+create trigger trigger_auto_generate_project_id
+  before insert on public.projects
+  for each row
+  execute function auto_generate_project_id();
+
+-- Trigger to update homepage_featured_projects updated_at
+drop trigger if exists update_homepage_featured_projects_updated_at on public.homepage_featured_projects;
+create trigger update_homepage_featured_projects_updated_at
+  before update on public.homepage_featured_projects
+  for each row
+  execute function update_updated_at_column();
+
+-- =========================
+-- TABLE/COLUMN DOCUMENTATION
+-- =========================
+
+comment on column public.projects.project_id is 'Auto-generated project ID in format YYYYMMDD-XXX';
+comment on column public.projects.completion_date is 'Project completion date used for ID generation and sorting';
+comment on column public.projects.date_text is 'Formatted date text for display (e.g., "March 2026")';
+comment on table public.homepage_featured_projects is 'Stores up to 5 projects featured on homepage with custom ordering';
+comment on table public.homepage_featured_achievements is 'Stores up to 3 achievements featured on homepage with custom ordering';
 
 -- ===========================
 -- DEFAULT SITE SETTINGS

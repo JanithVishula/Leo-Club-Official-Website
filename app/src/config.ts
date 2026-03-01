@@ -603,6 +603,10 @@ export interface BoardMember {
   cvLink: string;
   contactNumber: string;
   contactLinks: MemberContactLink[];
+  displayOrder?: number;
+  email?: string;
+  linkedin?: string;
+  bio?: string;
 }
 
 export interface BoardMembersConfig {

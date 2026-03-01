@@ -9,15 +9,22 @@ export function BoardMembersPage() {
   useEffect(() => {
     listBoardMembersPublic().then((data) => {
       if (data.length > 0) {
-        const mapped = data.map(m => ({
-          id: m.display_order,
+        const mapped = data.map((m, index) => ({
+          id: index + 1, // Use numeric ID
           name: m.name,
           role: m.role,
-          image: m.image_url || '',
+          image: m.imageUrl || '',
           imageAlt: `${m.name} - ${m.role}`,
-          contactNumber: m.contact_number || 'Not provided',
-          cvLink: m.cv_link || '#',
-          contactLinks: m.contact_links as { label: string; href: string }[] || [],
+          email: m.email || '',
+          linkedin: m.linkedin || '',
+          bio: m.bio || '',
+          displayOrder: m.displayOrder,
+          cvLink: '#',
+          contactNumber: m.email || 'Not provided',
+          contactLinks: [
+            ...(m.email ? [{ label: 'Email', href: `mailto:${m.email}` }] : []),
+            ...(m.linkedin ? [{ label: 'LinkedIn', href: m.linkedin }] : []),
+          ],
         }));
         setMembers(mapped);
       }
@@ -60,7 +67,8 @@ export function BoardMembersPage() {
     const bRank = hierarchyOrder[b.role] ?? Number.MAX_SAFE_INTEGER;
 
     if (aRank !== bRank) return aRank - bRank;
-    return a.id - b.id;
+    // If same rank, sort by displayOrder
+    return (a.displayOrder || 0) - (b.displayOrder || 0);
   });
 
   return (

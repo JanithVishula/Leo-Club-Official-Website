@@ -22,6 +22,32 @@ export interface MembershipApplicationRecord extends MembershipApplicationInput 
   createdAt: string;
 }
 
+export const PROJECT_CATEGORIES = [
+  'Spotlight on Children',
+  'Responsible Consumption & Waste Management',
+  'Nutrition and Food Safety',
+  'Peace, Religious & Cultural Activities',
+  'Sports & Recreation',
+  'Health & Wellbeing',
+  'Senior Citizens Development',
+  'Helping Hand to Differently Abled',
+  'Public Relations',
+  'Fundraiser',
+  'Quality Education & Literacy',
+  'Women Empowerment',
+  'Poverty & Better Life',
+  'Clean Water & Energy Conservation',
+  'Crime & Accident Prevention',
+  'Infrastructure Development',
+  'Research and Development',
+  'Drug Prevention and Rehabilitation',
+  'Wildlife & Life Below Water',
+  'Fellowship',
+  'Betterment of Leoism',
+] as const;
+
+export type ProjectCategory = typeof PROJECT_CATEGORIES[number];
+
 export interface CmsProjectRecord {
   id: string;
   title: string;
@@ -32,7 +58,25 @@ export interface CmsProjectRecord {
   galleryImages: string[];
   isFeatured: boolean;
   displayOrder: number;
+  projectId: string | null;
+  completionDate: string | null;
   createdAt: string;
+}
+
+export interface HomepageFeaturedProject {
+  id: string;
+  projectId: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HomepageFeaturedAchievement {
+  id: string;
+  achievementId: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type CmsAchievementCategory = 'project' | 'individual' | 'special';
@@ -131,6 +175,8 @@ function mapProjectRow(row: Record<string, unknown>): CmsProjectRecord {
       : [],
     isFeatured: Boolean(row.is_featured),
     displayOrder: Number(row.display_order ?? 0),
+    projectId: (row.project_id as string | null) ?? null,
+    completionDate: (row.completion_date as string | null) ?? null,
     createdAt: String(row.created_at ?? ''),
   };
 }
@@ -187,8 +233,7 @@ export async function listProjectsPublic() {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
-    .order('display_order', { ascending: true })
-    .order('created_at', { ascending: false });
+    .order('project_id', { ascending: false });
   if (error) return [];
   return (data ?? []).map((row) => mapProjectRow(row as Record<string, unknown>));
 }
@@ -202,27 +247,60 @@ export async function listProjectsAdmin() {
 
 export async function createProjectAdmin(input: {
   title: string;
-  dateText: string;
   category: string;
   description: string;
   imageUrl: string;
   galleryImages: string[];
-  isFeatured: boolean;
-  displayOrder: number;
+  completionDate: string;
 }) {
   assertConfigured();
   const session = await getCurrentSession();
   ensureAdminSession(session);
+  
+  // Format date_text as "Month YYYY" for display
+  const dateObj = new Date(input.completionDate);
+  const dateText = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  
   const { error } = await supabase!.from('projects').insert({
     title: input.title,
-    date_text: input.dateText,
+    date_text: dateText,
     category: input.category || null,
     description: input.description,
     image_url: input.imageUrl,
     gallery_images: input.galleryImages,
-    is_featured: input.isFeatured,
-    display_order: input.displayOrder,
+    completion_date: input.completionDate,
+    is_featured: false,
+    display_order: 0,
   });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateProjectAdmin(input: {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  imageUrl: string;
+  galleryImages: string[];
+  completionDate: string;
+}) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  
+  // Format date_text as "Month YYYY" for display
+  const dateObj = new Date(input.completionDate);
+  const dateText = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  
+  const { error } = await supabase!.from('projects').update({
+    title: input.title,
+    date_text: dateText,
+    category: input.category || null,
+    description: input.description,
+    image_url: input.imageUrl,
+    gallery_images: input.galleryImages,
+    completion_date: input.completionDate,
+  }).eq('id', input.id);
   if (error) throw new Error(error.message);
 }
 
@@ -274,6 +352,29 @@ export async function createAchievementAdmin(input: {
   if (error) throw new Error(error.message);
 }
 
+export async function updateAchievementAdmin(input: {
+  id: string;
+  category: CmsAchievementCategory;
+  title: string;
+  details: string[];
+  imageUrl?: string;
+  imageAlt?: string;
+  displayOrder: number;
+}) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  const { error } = await supabase!.from('achievements').update({
+    category: input.category,
+    title: input.title,
+    details: input.details,
+    image_url: input.imageUrl?.trim() || null,
+    image_alt: input.imageAlt?.trim() || null,
+    display_order: input.displayOrder,
+  }).eq('id', input.id);
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteAchievementAdmin(id: string) {
   assertConfigured();
   const session = await getCurrentSession();
@@ -286,6 +387,34 @@ export async function deleteAchievementAdmin(id: string) {
 // =========================
 
 // Board Members
+export interface BoardMemberRecord {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl: string | null;
+  bio: string | null;
+  email: string | null;
+  linkedin: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+function mapBoardMemberRow(row: Record<string, unknown>): BoardMemberRecord {
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ''),
+    role: String(row.role ?? ''),
+    imageUrl: (row.image_url as string | null) ?? null,
+    bio: (row.bio as string | null) ?? null,
+    email: (row.email as string | null) ?? null,
+    linkedin: (row.linkedin as string | null) ?? null,
+    displayOrder: Number(row.display_order ?? 0),
+    isActive: Boolean(row.is_active),
+    createdAt: String(row.created_at ?? ''),
+  };
+}
+
 export async function listBoardMembersPublic() {
   if (!supabase) return [];
   const { data, error } = await supabase
@@ -294,7 +423,85 @@ export async function listBoardMembersPublic() {
     .eq('is_active', true)
     .order('display_order', { ascending: true });
   if (error) return [];
-  return data ?? [];
+  return (data ?? []).map((row) => mapBoardMemberRow(row as Record<string, unknown>));
+}
+
+export async function listBoardMembersAdmin() {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  
+  const { data, error } = await supabase!
+    .from('board_members')
+    .select('*')
+    .order('display_order', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapBoardMemberRow(row as Record<string, unknown>));
+}
+
+export async function createBoardMemberAdmin(input: {
+  name: string;
+  role: string;
+  imageUrl?: string;
+  bio?: string;
+  email?: string;
+  linkedin?: string;
+  displayOrder?: number;
+}) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  
+  const { error } = await supabase!.from('board_members').insert({
+    name: input.name,
+    role: input.role,
+    image_url: input.imageUrl?.trim() || null,
+    bio: input.bio?.trim() || null,
+    email: input.email?.trim() || null,
+    linkedin: input.linkedin?.trim() || null,
+    display_order: input.displayOrder ?? 0,
+    is_active: true,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateBoardMemberAdmin(input: {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl?: string;
+  bio?: string;
+  email?: string;
+  linkedin?: string;
+  displayOrder?: number;
+  isActive: boolean;
+}) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  
+  const { error } = await supabase!
+    .from('board_members')
+    .update({
+      name: input.name,
+      role: input.role,
+      image_url: input.imageUrl?.trim() || null,
+      bio: input.bio?.trim() || null,
+      email: input.email?.trim() || null,
+      linkedin: input.linkedin?.trim() || null,
+      display_order: input.displayOrder ?? 0,
+      is_active: input.isActive,
+    })
+    .eq('id', input.id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteBoardMemberAdmin(id: string) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  const { error } = await supabase!.from('board_members').delete().eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 // Testimonials
@@ -381,4 +588,121 @@ export async function listAllSiteSettingsPublic() {
     settings[row.key] = row.value;
   });
   return settings;
+}
+
+// =========================
+// HOMEPAGE FEATURED PROJECTS
+// =========================
+
+export async function listHomepageFeaturedProjects() {
+  if (!supabase) return [];
+  
+  const { data, error } = await supabase
+    .from('homepage_featured_projects')
+    .select(`
+      id,
+      display_order,
+      created_at,
+      updated_at,
+      projects:project_id (*)
+    `)
+    .order('display_order', { ascending: true });
+    
+  if (error) {
+    console.error('Error loading featured projects:', error);
+    return [];
+  }
+  
+  return (data ?? []).map((item: any) => ({
+    ...mapProjectRow(item.projects as Record<string, unknown>),
+    featuredOrder: item.display_order,
+  }));
+}
+
+export async function updateHomepageFeaturedProjects(projectIds: string[]) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  
+  // Delete all existing featured projects
+  const { error: deleteError } = await supabase!
+    .from('homepage_featured_projects')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+    
+  if (deleteError) throw new Error(deleteError.message);
+  
+  // Insert new featured projects
+  const insertData = projectIds.slice(0, 5).map((projectId, index) => ({
+    project_id: projectId,
+    display_order: index,
+  }));
+  
+  if (insertData.length > 0) {
+    const { error: insertError } = await supabase!
+      .from('homepage_featured_projects')
+      .insert(insertData);
+      
+    if (insertError) throw new Error(insertError.message);
+  }
+}
+// =========================
+// HOMEPAGE FEATURED ACHIEVEMENTS
+// =========================
+
+export async function listHomepageFeaturedAchievements() {
+  if (!supabase) return [];
+  
+  const { data, error } = await supabase
+    .from('homepage_featured_achievements')
+    .select(`
+      id,
+      display_order,
+      created_at,
+      updated_at,
+      achievements:achievement_id (*)
+    `)
+    .order('display_order', { ascending: true });
+    
+  if (error) {
+    console.error('Error loading featured achievements:', error);
+    return [];
+  }
+  
+  return (data ?? []).map((item: any) => ({
+    ...mapAchievementRow(item.achievements as Record<string, unknown>),
+    featuredOrder: item.display_order,
+  }));
+}
+
+export async function updateHomepageFeaturedAchievements(achievementIds: string[]) {
+  assertConfigured();
+  const session = await getCurrentSession();
+  ensureAdminSession(session);
+  
+  // Delete all existing featured achievements
+  const { error: deleteError } = await supabase!
+    .from('homepage_featured_achievements')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+    
+  if (deleteError) {
+    throw new Error(deleteError.message);
+  }
+  
+  // Insert new featured achievements
+  const insertData = achievementIds.slice(0, 3).map((achievementId, index) => ({
+    achievement_id: achievementId,
+    display_order: index,
+  }));
+  
+  if (insertData.length > 0) {
+    const { error: insertError } = await supabase!
+      .from('homepage_featured_achievements')
+      .insert(insertData);
+      
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+  }
 }

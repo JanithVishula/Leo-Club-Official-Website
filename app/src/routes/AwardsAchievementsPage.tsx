@@ -41,8 +41,12 @@ export function AwardsAchievementsPage() {
 
   const specialRecognition = useMemo(() => {
     const row = remoteAchievements.find((item) => item.category === 'special');
-    if (!row) return achievementsConfig.specialRecognition;
-    return row.details[0] || row.title;
+    if (!row) return { text: achievementsConfig.specialRecognition, image: null, imageAlt: null };
+    return { 
+      text: row.details[0] || row.title, 
+      image: row.imageUrl || null,
+      imageAlt: row.imageAlt || row.title
+    };
   }, [remoteAchievements]);
 
   return (
@@ -125,7 +129,17 @@ export function AwardsAchievementsPage() {
 
         <section className="mt-8 rounded-xl border border-blue-300/20 bg-blue-950/30 p-6 md:p-8">
           <h2 className="text-xl md:text-2xl font-sans font-semibold text-white mb-3">Special Recognition</h2>
-          <p className="text-white/80 font-body leading-relaxed">{specialRecognition}</p>
+          {specialRecognition.image && (
+            <div className="mb-4 aspect-[16/9] w-full overflow-hidden rounded-md border border-white/10 bg-slate-900/80">
+              <img
+                src={specialRecognition.image}
+                alt={specialRecognition.imageAlt || 'Special Recognition'}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <p className="text-white/80 font-body leading-relaxed">{specialRecognition.text}</p>
         </section>
       </div>
     </main>

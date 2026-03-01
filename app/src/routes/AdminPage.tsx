@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   createAchievementAdmin,
   createProjectAdmin,
+  updateProjectAdmin,
+  updateAchievementAdmin,
   deleteAchievementAdmin,
   deleteProjectAdmin,
   getCurrentSession,
@@ -12,16 +14,45 @@ import {
   signInAdmin,
   signOutAdmin,
   updateApplicationAdmin,
+  updateHomepageFeaturedProjects,
+  listHomepageFeaturedProjects,
+  updateHomepageFeaturedAchievements,
+  listHomepageFeaturedAchievements,
+  listBoardMembersAdmin,
+  createBoardMemberAdmin,
+  updateBoardMemberAdmin,
+  deleteBoardMemberAdmin,
   type ApplicationStatus,
   type CmsAchievementCategory,
   type CmsAchievementRecord,
   type CmsProjectRecord,
   type MembershipApplicationRecord,
+  type BoardMemberRecord,
+  PROJECT_CATEGORIES,
 } from '../lib/cmsApi';
 import { adminEmail, isSupabaseConfigured } from '../lib/supabase';
-import { uploadImage, uploadMultipleImages } from '../lib/storageApi';
+import { uploadImage, uploadMultipleImages, generateProjectFolderName } from '../lib/storageApi';
+import { DatePicker } from '../components/ui/date-picker';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, X } from 'lucide-react';
 
-type AdminTab = 'applications' | 'projects' | 'achievements';
+type AdminTab = 'applications' | 'projects' | 'achievements' | 'homepage' | 'homepage-achievements' | 'officers';
 
 export function AdminPage() {
   const [loading, setLoading] = useState(true);
@@ -37,46 +68,80 @@ export function AdminPage() {
   const [applications, setApplications] = useState<MembershipApplicationRecord[]>([]);
   const [projects, setProjects] = useState<CmsProjectRecord[]>([]);
   const [achievements, setAchievements] = useState<CmsAchievementRecord[]>([]);
+  const [boardMembers, setBoardMembers] = useState<BoardMemberRecord[]>([]);
+  const [featuredProjects, setFeaturedProjects] = useState<CmsProjectRecord[]>([]);
+  const [availableProjects, setAvailableProjects] = useState<CmsProjectRecord[]>([]);
+  const [featuredAchievements, setFeaturedAchievements] = useState<CmsAchievementRecord[]>([]);
+  const [availableAchievements, setAvailableAchievements] = useState<CmsAchievementRecord[]>([]);
   const [busyMessage, setBusyMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const [projectForm, setProjectForm] = useState({
+    id: '',
     title: '',
-    dateText: '',
+    completionDate: undefined as Date | undefined,
     category: '',
     description: '',
     imageUrl: '',
     galleryImagesText: '',
-    isFeatured: true,
-    displayOrder: 0,
+    isEditing: false,
   });
 
   const [achievementForm, setAchievementForm] = useState({
+    id: '',
     category: 'project' as CmsAchievementCategory,
     title: '',
     detailsText: '',
     imageUrl: '',
     imageAlt: '',
     displayOrder: 0,
+    isEditing: false,
+  });
+
+  const [boardMemberForm, setBoardMemberForm] = useState({
+    id: '',
+    name: '',
+    role: '',
+    imageUrl: '',
+    bio: '',
+    email: '',
+    linkedin: '',
+    isActive: true,
+    isEditing: false,
   });
 
   // File upload states
   const [projectMainImage, setProjectMainImage] = useState<File | null>(null);
   const [projectGalleryImages, setProjectGalleryImages] = useState<File[]>([]);
   const [achievementImage, setAchievementImage] = useState<File | null>(null);
+  const [boardMemberImage, setBoardMemberImage] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState('');
 
   const loadDashboardData = async () => {
     setErrorMessage('');
     try {
-      const [applicationRows, projectRows, achievementRows] = await Promise.all([
+      const [applicationRows, projectRows, achievementRows, boardMemberRows, featuredRows, featuredAchievementRows] = await Promise.all([
         listApplicationsAdmin(),
         listProjectsAdmin(),
         listAchievementsAdmin(),
+        listBoardMembersAdmin(),
+        listHomepageFeaturedProjects(),
+        listHomepageFeaturedAchievements(),
       ]);
       setApplications(applicationRows);
       setProjects(projectRows);
       setAchievements(achievementRows);
+      setBoardMembers(boardMemberRows);
+      setFeaturedProjects(featuredRows);
+      setFeaturedAchievements(featuredAchievementRows);
+      
+      // Set available projects (all projects not currently featured)
+      const featuredIds = new Set(featuredRows.map(p => p.id));
+      setAvailableProjects(projectRows.filter(p => !featuredIds.has(p.id)));
+      
+      // Set available achievements (all achievements not currently featured)
+      const featuredAchievementIds = new Set(featuredAchievementRows.map(a => a.id));
+      setAvailableAchievements(achievementRows.filter(a => !featuredAchievementIds.has(a.id)));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load admin data.';
       setErrorMessage(message);
@@ -159,25 +224,63 @@ export function AdminPage() {
     }
   };
 
-  const onCreateProject = async (event: FormEvent<HTMLFormElement>) => {
+  const onCreateOrUpdateProject = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setBusyMessage('Adding project...');
+    setBusyMessage(projectForm.isEditing ? 'Updating project...' : 'Adding project...');
     setErrorMessage('');
     setUploadProgress('');
     try {
       let imageUrl = projectForm.imageUrl.trim();
       let galleryImages: string[] = [];
 
+      console.log('Project form state:', {
+        hasFile: !!projectMainImage,
+        hasUrlText: !!imageUrl,
+        fileName: projectMainImage?.name,
+        urlValue: imageUrl
+      });
+
+      if (!projectForm.completionDate) {
+        throw new Error('Please select a completion date');
+      }
+
+      if (!projectForm.category) {
+        throw new Error('Please select a category');
+      }
+
+      // Check if we have either a file or URL BEFORE processing
+      if (!projectMainImage && !imageUrl) {
+        throw new Error('Please provide a main image (upload a file or enter a URL)');
+      }
+
+      // Format date as YYYY-MM-DD
+      const formattedDate = projectForm.completionDate.toISOString().split('T')[0];
+
+      // Generate project-specific folder name
+      const projectFolder = generateProjectFolderName(projectForm.title.trim(), formattedDate);
+
       // Upload main image if file selected
       if (projectMainImage) {
         setUploadProgress('Uploading main image...');
-        imageUrl = await uploadImage(projectMainImage, 'projects');
+        console.log('Starting upload for file:', projectMainImage.name, 'to folder:', projectFolder);
+        try {
+          const uploadedUrl = await uploadImage(projectMainImage, 'projects', undefined, projectFolder);
+          console.log('Upload successful! URL:', uploadedUrl);
+          if (uploadedUrl && uploadedUrl.trim() !== '') {
+            imageUrl = uploadedUrl;
+          } else {
+            throw new Error('Upload returned empty URL');
+          }
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error(`Image upload failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
+        }
       }
 
       // Upload gallery images if files selected
       if (projectGalleryImages.length > 0) {
         setUploadProgress(`Uploading ${projectGalleryImages.length} gallery images...`);
-        galleryImages = await uploadMultipleImages(projectGalleryImages, 'projects');
+        galleryImages = await uploadMultipleImages(projectGalleryImages, 'projects', projectFolder);
       } else {
         // Fallback to text input
         galleryImages = projectForm.galleryImagesText
@@ -186,49 +289,57 @@ export function AdminPage() {
           .filter(Boolean);
       }
 
-      if (!imageUrl) {
-        throw new Error('Please provide a main image (file or URL)');
+      console.log('Final imageUrl:', imageUrl);
+      console.log('Final galleryImages:', galleryImages);
+
+      if (!imageUrl || imageUrl.trim() === '') {
+        throw new Error('Image URL is empty after processing');
       }
 
-      setUploadProgress('Creating project...');
-      await createProjectAdmin({
+      const data = {
         title: projectForm.title.trim(),
-        dateText: projectForm.dateText.trim(),
         category: projectForm.category.trim(),
         description: projectForm.description.trim(),
         imageUrl,
         galleryImages,
-        isFeatured: projectForm.isFeatured,
-        displayOrder: Number(projectForm.displayOrder || 0),
-      });
+        completionDate: formattedDate,
+      };
+
+      setUploadProgress(projectForm.isEditing ? 'Updating project...' : 'Creating project...');
+      if (projectForm.isEditing) {
+        await updateProjectAdmin({ id: projectForm.id, ...data });
+      } else {
+        await createProjectAdmin(data);
+      }
 
       // Reset form
       setProjectForm({
+        id: '',
         title: '',
-        dateText: '',
+        completionDate: undefined,
         category: '',
         description: '',
         imageUrl: '',
         galleryImagesText: '',
-        isFeatured: true,
-        displayOrder: 0,
+        isEditing: false,
       });
       setProjectMainImage(null);
       setProjectGalleryImages([]);
 
       await loadDashboardData();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add project.';
+      const message = error instanceof Error ? error.message : 'Failed to save project.';
       setErrorMessage(message);
+      console.error('Project save error:', error);
     } finally {
       setBusyMessage('');
       setUploadProgress('');
     }
   };
 
-  const onCreateAchievement = async (event: FormEvent<HTMLFormElement>) => {
+  const onCreateOrUpdateAchievement = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setBusyMessage('Adding achievement...');
+    setBusyMessage(achievementForm.isEditing ? 'Updating achievement...' : 'Adding achievement...');
     setErrorMessage('');
     setUploadProgress('');
     try {
@@ -245,30 +356,38 @@ export function AdminPage() {
         .map((item) => item.trim())
         .filter(Boolean);
 
-      setUploadProgress('Creating achievement...');
-      await createAchievementAdmin({
+      const data = {
         category: achievementForm.category,
         title: achievementForm.title.trim(),
         details,
         imageUrl,
         imageAlt: achievementForm.imageAlt.trim(),
         displayOrder: Number(achievementForm.displayOrder || 0),
-      });
+      };
+
+      setUploadProgress(achievementForm.isEditing ? 'Updating achievement...' : 'Creating achievement...');
+      if (achievementForm.isEditing) {
+        await updateAchievementAdmin({ id: achievementForm.id, ...data });
+      } else {
+        await createAchievementAdmin(data);
+      }
 
       // Reset form
       setAchievementForm({
+        id: '',
         category: 'project',
         title: '',
         detailsText: '',
         imageUrl: '',
         imageAlt: '',
         displayOrder: 0,
+        isEditing: false,
       });
       setAchievementImage(null);
 
       await loadDashboardData();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add achievement.';
+      const message = error instanceof Error ? error.message : 'Failed to save achievement.';
       setErrorMessage(message);
     } finally {
       setBusyMessage('');
@@ -290,6 +409,37 @@ export function AdminPage() {
     }
   };
 
+  const onEditProject = (project: CmsProjectRecord) => {
+    setProjectForm({
+      id: project.id,
+      title: project.title,
+      completionDate: project.completionDate ? new Date(project.completionDate) : undefined,
+      category: project.category ?? '',
+      description: project.description || '',
+      imageUrl: project.imageUrl || '',
+      galleryImagesText: Array.isArray(project.galleryImages) ? project.galleryImages.join('\n') : '',
+      isEditing: true,
+    });
+    setProjectMainImage(null);
+    setProjectGalleryImages([]);
+    setActiveTab('projects');
+  };
+
+  const onCancelEditProject = () => {
+    setProjectForm({
+      id: '',
+      title: '',
+      completionDate: undefined,
+      category: '',
+      description: '',
+      imageUrl: '',
+      galleryImagesText: '',
+      isEditing: false,
+    });
+    setProjectMainImage(null);
+    setProjectGalleryImages([]);
+  };
+
   const onDeleteAchievement = async (id: string) => {
     setBusyMessage('Removing achievement...');
     setErrorMessage('');
@@ -298,6 +448,234 @@ export function AdminPage() {
       await loadDashboardData();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to remove achievement.';
+      setErrorMessage(message);
+    } finally {
+      setBusyMessage('');
+    }
+  };
+
+  const onEditAchievement = (achievement: CmsAchievementRecord) => {
+    setAchievementForm({
+      id: achievement.id,
+      category: achievement.category,
+      title: achievement.title,
+      detailsText: Array.isArray(achievement.details) ? achievement.details.join('\n') : '',
+      imageUrl: achievement.imageUrl || '',
+      imageAlt: achievement.imageAlt || '',
+      displayOrder: achievement.displayOrder,
+      isEditing: true,
+    });
+    setAchievementImage(null);
+    setActiveTab('achievements');
+  };
+
+  const onCancelEditAchievement = () => {
+    setAchievementForm({
+      id: '',
+      category: 'project',
+      title: '',
+      detailsText: '',
+      imageUrl: '',
+      imageAlt: '',
+      displayOrder: 0,
+      isEditing: false,
+    });
+    setAchievementImage(null);
+  };
+
+  // Homepage featured projects handlers
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setFeaturedProjects((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const addToFeatured = (project: CmsProjectRecord) => {
+    if (featuredProjects.length >= 5) {
+      setErrorMessage('You can only feature up to 5 projects on the homepage.');
+      return;
+    }
+    setFeaturedProjects([...featuredProjects, project]);
+    setAvailableProjects(availableProjects.filter(p => p.id !== project.id));
+  };
+
+  const removeFromFeatured = (projectId: string) => {
+    const project = featuredProjects.find(p => p.id === projectId);
+    if (project) {
+      setFeaturedProjects(featuredProjects.filter(p => p.id !== projectId));
+      setAvailableProjects([...availableProjects, project]);
+    }
+  };
+
+  const saveFeaturedProjects = async () => {
+    setBusyMessage('Updating homepage featured projects...');
+    setErrorMessage('');
+    try {
+      const projectIds = featuredProjects.map(p => p.id);
+      await updateHomepageFeaturedProjects(projectIds);
+      await loadDashboardData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update featured projects.';
+      setErrorMessage(message);
+    } finally {
+      setBusyMessage('');
+    }
+  };
+
+  // Homepage featured achievements handlers
+  const handleAchievementDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setFeaturedAchievements((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const addToFeaturedAchievements = (achievement: CmsAchievementRecord) => {
+    if (featuredAchievements.length >= 3) {
+      setErrorMessage('You can only feature up to 3 achievements on the homepage.');
+      return;
+    }
+    setFeaturedAchievements([...featuredAchievements, achievement]);
+    setAvailableAchievements(availableAchievements.filter(a => a.id !== achievement.id));
+  };
+
+  const removeFromFeaturedAchievements = (achievementId: string) => {
+    const achievement = featuredAchievements.find(a => a.id === achievementId);
+    if (achievement) {
+      setFeaturedAchievements(featuredAchievements.filter(a => a.id !== achievementId));
+      setAvailableAchievements([...availableAchievements, achievement]);
+    }
+  };
+
+  const saveFeaturedAchievements = async () => {
+    setBusyMessage('Updating homepage featured achievements...');
+    setErrorMessage('');
+    try {
+      const achievementIds = featuredAchievements.map(a => a.id);
+      await updateHomepageFeaturedAchievements(achievementIds);
+      await loadDashboardData();
+      alert(`Successfully updated ${achievementIds.length} featured achievement(s) on homepage!`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update featured achievements.';
+      setErrorMessage(message);
+    } finally {
+      setBusyMessage('');
+    }
+  };
+
+  // Board Members handlers
+  const onCreateOrUpdateBoardMember = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBusyMessage(boardMemberForm.isEditing ? 'Updating board member...' : 'Adding board member...');
+    setErrorMessage('');
+    setUploadProgress('');
+    try {
+      let imageUrl = boardMemberForm.imageUrl.trim();
+
+      // Upload image if file selected
+      if (boardMemberImage) {
+        setUploadProgress('Uploading image...');
+        imageUrl = await uploadImage(boardMemberImage, 'board-members');
+      }
+
+      const data = {
+        name: boardMemberForm.name.trim(),
+        role: boardMemberForm.role.trim(),
+        imageUrl,
+        bio: boardMemberForm.bio.trim(),
+        email: boardMemberForm.email.trim(),
+        linkedin: boardMemberForm.linkedin.trim(),
+        isActive: boardMemberForm.isActive,
+      };
+
+      if (boardMemberForm.isEditing) {
+        await updateBoardMemberAdmin({ id: boardMemberForm.id, ...data });
+      } else {
+        await createBoardMemberAdmin(data);
+      }
+
+      // Reset form
+      setBoardMemberForm({
+        id: '',
+        name: '',
+        role: '',
+        imageUrl: '',
+        bio: '',
+        email: '',
+        linkedin: '',
+        isActive: true,
+        isEditing: false,
+      });
+      setBoardMemberImage(null);
+
+      await loadDashboardData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save board member.';
+      setErrorMessage(message);
+    } finally {
+      setBusyMessage('');
+      setUploadProgress('');
+    }
+  };
+
+  const onEditBoardMember = (member: BoardMemberRecord) => {
+    setBoardMemberForm({
+      id: member.id,
+      name: member.name,
+      role: member.role,
+      imageUrl: member.imageUrl || '',
+      bio: member.bio || '',
+      email: member.email || '',
+      linkedin: member.linkedin || '',
+      isActive: member.isActive,
+      isEditing: true,
+    });
+    setBoardMemberImage(null);
+    setActiveTab('officers');
+  };
+
+  const onCancelEditBoardMember = () => {
+    setBoardMemberForm({
+      id: '',
+      name: '',
+      role: '',
+      imageUrl: '',
+      bio: '',
+      email: '',
+      linkedin: '',
+      isActive: true,
+      isEditing: false,
+    });
+    setBoardMemberImage(null);
+  };
+
+  const onDeleteBoardMember = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this board member?')) return;
+    setBusyMessage('Removing board member...');
+    setErrorMessage('');
+    try {
+      await deleteBoardMemberAdmin(id);
+      await loadDashboardData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to remove board member.';
       setErrorMessage(message);
     } finally {
       setBusyMessage('');
@@ -395,7 +773,7 @@ export function AdminPage() {
         </div>
 
         <div className="mb-6 flex flex-wrap gap-3">
-          {(['applications', 'projects', 'achievements'] as AdminTab[]).map((tab) => (
+          {(['homepage', 'homepage-achievements', 'applications', 'projects', 'achievements', 'officers'] as AdminTab[]).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -404,7 +782,12 @@ export function AdminPage() {
                 activeTab === tab ? 'bg-white text-slate-950' : 'bg-slate-900 text-white/75 hover:text-white'
               }`}
             >
-              {tab === 'applications' ? 'Applications' : tab === 'projects' ? 'Projects' : 'Achievements'}
+              {tab === 'applications' ? 'Applications' 
+                : tab === 'projects' ? 'Projects' 
+                : tab === 'achievements' ? 'Achievements'
+                : tab === 'homepage' ? 'Homepage Projects'
+                : tab === 'homepage-achievements' ? 'Homepage Achievements'
+                : 'Officers / Board'}
             </button>
           ))}
         </div>
@@ -449,15 +832,39 @@ export function AdminPage() {
 
         {activeTab === 'projects' && (
           <section className="grid lg:grid-cols-2 gap-6">
-            <form onSubmit={onCreateProject} className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-4">
-              <h2 className="text-xl font-sans font-semibold text-white">Add Project</h2>
+            <form onSubmit={onCreateOrUpdateProject} className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-4">
+              <h2 className="text-xl font-sans font-semibold text-white">{projectForm.isEditing ? 'Edit Project' : 'Add Project'}</h2>
               <TextField label="Title" value={projectForm.title} onChange={(value) => setProjectForm((prev) => ({ ...prev, title: value }))} />
-              <TextField label="Date" value={projectForm.dateText} onChange={(value) => setProjectForm((prev) => ({ ...prev, dateText: value }))} />
-              <TextField label="Category" value={projectForm.category} onChange={(value) => setProjectForm((prev) => ({ ...prev, category: value }))} />
+              
+              <div className="space-y-2">
+                <label className="block text-white/80 text-sm font-medium">Completion Date *</label>
+                <DatePicker
+                  date={projectForm.completionDate}
+                  onDateChange={(date) => setProjectForm((prev) => ({ ...prev, completionDate: date }))}
+                  placeholder="Select completion date"
+                  className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 hover:bg-slate-950/80 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-white/80 text-sm font-medium">Category *</label>
+                <select
+                  value={projectForm.category}
+                  onChange={(event) => setProjectForm((prev) => ({ ...prev, category: event.target.value }))}
+                  className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 px-3 text-white"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {PROJECT_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
               <TextAreaField label="Description" value={projectForm.description} onChange={(value) => setProjectForm((prev) => ({ ...prev, description: value }))} rows={4} />
               
               <div className="space-y-2">
-                <label className="block text-white/80 text-sm font-medium">Main Image</label>
+                <label className="block text-white/80 text-sm font-medium">Main Image *</label>
                 <div className="grid gap-3">
                   <div>
                     <label className="block text-white/60 text-xs mb-1">Upload Image (recommended)</label>
@@ -466,6 +873,7 @@ export function AdminPage() {
                       accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
+                        console.log('File selected:', file?.name, 'Size:', file?.size);
                         if (file) {
                           setProjectMainImage(file);
                           setProjectForm((prev) => ({ ...prev, imageUrl: '' })); // Clear URL if file selected
@@ -473,7 +881,7 @@ export function AdminPage() {
                       }}
                       className="w-full text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-slate-950 file:font-semibold hover:file:bg-white/90"
                     />
-                    {projectMainImage && <p className="text-green-400 text-xs mt-1">✓ {projectMainImage.name}</p>}
+                    {projectMainImage && <p className="text-green-400 text-xs mt-1">✓ {projectMainImage.name} ({Math.round(projectMainImage.size / 1024)}KB)</p>}
                   </div>
                   <div>
                     <label className="block text-white/60 text-xs mb-1">Or enter URL</label>
@@ -528,26 +936,17 @@ export function AdminPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="text-white/80 text-sm">
-                  <span className="block mb-2">Display Order</span>
-                  <input
-                    type="number"
-                    value={projectForm.displayOrder}
-                    onChange={(event) => setProjectForm((prev) => ({ ...prev, displayOrder: Number(event.target.value) }))}
-                    className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 px-3 text-white"
-                  />
-                </label>
-                <label className="inline-flex items-center gap-2 text-white/80 text-sm mt-8">
-                  <input
-                    type="checkbox"
-                    checked={projectForm.isFeatured}
-                    onChange={(event) => setProjectForm((prev) => ({ ...prev, isFeatured: event.target.checked }))}
-                  />
-                  Feature on home page
-                </label>
+              
+              <div className="flex gap-2">
+                <button type="submit" className="rounded-md bg-white text-slate-950 px-4 py-2 text-sm font-semibold">
+                  {projectForm.isEditing ? 'Update Project' : 'Add Project'}
+                </button>
+                {projectForm.isEditing && (
+                  <button type="button" onClick={onCancelEditProject} className="rounded-md bg-white/10 text-white px-4 py-2 text-sm font-semibold">
+                    Cancel
+                  </button>
+                )}
               </div>
-              <button type="submit" className="rounded-md bg-white text-slate-950 px-4 py-2 text-sm font-semibold">Add Project</button>
             </form>
 
             <div className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-3">
@@ -556,8 +955,11 @@ export function AdminPage() {
                 {projects.map((project) => (
                   <div key={project.id} className="rounded-md border border-white/10 p-3">
                     <p className="text-white font-semibold">{project.title}</p>
-                    <p className="text-white/60 text-xs mt-1">{project.dateText} • {project.category || 'General'}</p>
-                    <div className="mt-2">
+                    <p className="text-white/60 text-xs mt-1">{project.projectId || project.dateText} • {project.category || 'General'}</p>
+                    <div className="mt-2 flex gap-3">
+                      <button type="button" onClick={() => onEditProject(project)} className="text-blue-300 hover:text-blue-200 text-xs">
+                        Edit
+                      </button>
                       <button type="button" onClick={() => onDeleteProject(project.id)} className="text-red-300 hover:text-red-200 text-xs">
                         Delete
                       </button>
@@ -572,8 +974,8 @@ export function AdminPage() {
 
         {activeTab === 'achievements' && (
           <section className="grid lg:grid-cols-2 gap-6">
-            <form onSubmit={onCreateAchievement} className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-4">
-              <h2 className="text-xl font-sans font-semibold text-white">Add Achievement</h2>
+            <form onSubmit={onCreateOrUpdateAchievement} className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-4">
+              <h2 className="text-xl font-sans font-semibold text-white">{achievementForm.isEditing ? 'Edit Achievement' : 'Add Achievement'}</h2>
               <label className="block text-white/80 text-sm">
                 <span className="block mb-2">Category</span>
                 <select
@@ -634,7 +1036,16 @@ export function AdminPage() {
                   className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 px-3 text-white"
                 />
               </label>
-              <button type="submit" className="rounded-md bg-white text-slate-950 px-4 py-2 text-sm font-semibold">Add Achievement</button>
+              <div className="flex gap-2">
+                <button type="submit" className="rounded-md bg-white text-slate-950 px-4 py-2 text-sm font-semibold">
+                  {achievementForm.isEditing ? 'Update Achievement' : 'Add Achievement'}
+                </button>
+                {achievementForm.isEditing && (
+                  <button type="button" onClick={onCancelEditAchievement} className="rounded-md bg-white/10 text-white px-4 py-2 text-sm font-semibold">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
 
             <div className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-3">
@@ -644,9 +1055,14 @@ export function AdminPage() {
                   <div key={achievement.id} className="rounded-md border border-white/10 p-3">
                     <p className="text-white font-semibold">{achievement.title}</p>
                     <p className="text-white/60 text-xs mt-1">{achievement.category}</p>
-                    <button type="button" onClick={() => onDeleteAchievement(achievement.id)} className="mt-2 text-red-300 hover:text-red-200 text-xs">
-                      Delete
-                    </button>
+                    <div className="mt-2 flex gap-3">
+                      <button type="button" onClick={() => onEditAchievement(achievement)} className="text-blue-300 hover:text-blue-200 text-xs">
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => onDeleteAchievement(achievement.id)} className="text-red-300 hover:text-red-200 text-xs">
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {achievements.length === 0 && <p className="text-white/60 text-sm">No achievements yet.</p>}
@@ -654,8 +1070,463 @@ export function AdminPage() {
             </div>
           </section>
         )}
+
+        {activeTab === 'homepage' && (
+          <section className="space-y-6">
+            <div className="rounded-xl border border-white/10 bg-slate-900/80 p-6">
+              <h2 className="text-xl font-sans font-semibold text-white mb-4">Homepage Featured Projects</h2>
+              <p className="text-white/60 text-sm mb-6">
+                Select up to 5 projects to feature on the homepage. Drag to reorder them.
+              </p>
+
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Featured Projects - Drag and Drop */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white font-semibold">Featured Projects ({featuredProjects.length}/5)</h3>
+                    {featuredProjects.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={saveFeaturedProjects}
+                        className="rounded-md bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-semibold transition-colors"
+                      >
+                        Save Order
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-white/20 p-4">
+                    {featuredProjects.length === 0 ? (
+                      <p className="text-white/40 text-sm text-center py-8">
+                        No projects selected. Add projects from the right panel.
+                      </p>
+                    ) : (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={featuredProjects.map(p => p.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {featuredProjects.map((project, index) => (
+                            <SortableProjectItem
+                              key={project.id}
+                              project={project}
+                              index={index}
+                              onRemove={removeFromFeatured}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                  </div>
+                </div>
+
+                {/* Available Projects */}
+                <div className="space-y-3">
+                  <h3 className="text-white font-semibold">Available Projects</h3>
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                    {availableProjects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="rounded-md border border-white/10 p-3 hover:border-white/30 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold truncate">{project.title}</p>
+                            <p className="text-white/60 text-xs mt-1">
+                              {project.projectId || project.dateText} • {project.category || 'General'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addToFeatured(project)}
+                            disabled={featuredProjects.length >= 5}
+                            className="text-green-400 hover:text-green-300 text-xs font-semibold disabled:text-white/30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {availableProjects.length === 0 && (
+                      <p className="text-white/40 text-sm text-center py-8">
+                        All projects are featured or no projects available.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'homepage-achievements' && (
+          <section className="space-y-6">
+            <div className="rounded-xl border border-white/10 bg-slate-900/80 p-6">
+              <h2 className="text-xl font-sans font-semibold text-white mb-4">Homepage Featured Achievements</h2>
+              <p className="text-white/60 text-sm mb-6">
+                Select up to 3 achievements to feature on the homepage. Drag to reorder them.
+              </p>
+
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Featured Achievements - Drag and Drop */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white font-semibold">Featured Achievements ({featuredAchievements.length}/3)</h3>
+                    {featuredAchievements.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={saveFeaturedAchievements}
+                        className="rounded-md bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-semibold transition-colors"
+                      >
+                        Save Order
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-white/20 p-4">
+                    {featuredAchievements.length === 0 ? (
+                      <p className="text-white/40 text-sm text-center py-8">
+                        No achievements selected. Add achievements from the right panel.
+                      </p>
+                    ) : (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleAchievementDragEnd}
+                      >
+                        <SortableContext
+                          items={featuredAchievements.map(a => a.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {featuredAchievements.map((achievement, index) => (
+                            <SortableAchievementItem
+                              key={achievement.id}
+                              achievement={achievement}
+                              index={index}
+                              onRemove={removeFromFeaturedAchievements}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                  </div>
+                </div>
+
+                {/* Available Achievements */}
+                <div className="space-y-3">
+                  <h3 className="text-white font-semibold">Available Achievements</h3>
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                    {availableAchievements.map((achievement) => (
+                      <div
+                        key={achievement.id}
+                        className="rounded-md border border-white/10 p-3 hover:border-white/30 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold truncate">{achievement.title}</p>
+                            <p className="text-white/60 text-xs mt-1">
+                              {achievement.category === 'project' ? 'Project Award' 
+                                : achievement.category === 'individual' ? 'Individual Award'
+                                : 'Special Recognition'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addToFeaturedAchievements(achievement)}
+                            disabled={featuredAchievements.length >= 3}
+                            className="text-green-400 hover:text-green-300 text-xs font-semibold disabled:text-white/30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {availableAchievements.length === 0 && (
+                      <p className="text-white/40 text-sm text-center py-8">
+                        All achievements are featured or no achievements available.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'officers' && (
+          <section className="grid lg:grid-cols-2 gap-6">
+            <form onSubmit={onCreateOrUpdateBoardMember} className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-sans font-semibold text-white">
+                  {boardMemberForm.isEditing ? 'Edit Officer / Board Member' : 'Add Officer / Board Member'}
+                </h2>
+                {boardMemberForm.isEditing && (
+                  <button
+                    type="button"
+                    onClick={onCancelEditBoardMember}
+                    className="text-white/60 hover:text-white text-sm"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+
+              <TextField 
+                label="Name *" 
+                value={boardMemberForm.name} 
+                onChange={(value) => setBoardMemberForm((prev) => ({ ...prev, name: value }))} 
+              />
+              
+              <TextField 
+                label="Role / Position *" 
+                value={boardMemberForm.role} 
+                onChange={(value) => setBoardMemberForm((prev) => ({ ...prev, role: value }))} 
+              />
+
+              <div className="space-y-2">
+                <label className="block text-white/80 text-sm font-medium">Profile Image</label>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Upload Image (recommended)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setBoardMemberImage(file);
+                          setBoardMemberForm((prev) => ({ ...prev, imageUrl: '' }));
+                        }
+                      }}
+                      className="w-full text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-slate-950 file:font-semibold hover:file:bg-white/90"
+                    />
+                    {boardMemberImage && <p className="text-green-400 text-xs mt-1">✓ {boardMemberImage.name}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-xs mb-1">Or enter URL</label>
+                    <input
+                      type="text"
+                      value={boardMemberForm.imageUrl}
+                      onChange={(e) => {
+                        setBoardMemberForm((prev) => ({ ...prev, imageUrl: e.target.value }));
+                        if (e.target.value) setBoardMemberImage(null);
+                      }}
+                      placeholder="https://..."
+                      className="w-full h-10 rounded-md border border-white/20 bg-slate-950/60 px-3 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <TextAreaField 
+                label="Bio (optional)" 
+                value={boardMemberForm.bio} 
+                onChange={(value) => setBoardMemberForm((prev) => ({ ...prev, bio: value }))} 
+                rows={3} 
+              />
+
+              <TextField 
+                label="Email (optional)" 
+                value={boardMemberForm.email} 
+                onChange={(value) => setBoardMemberForm((prev) => ({ ...prev, email: value }))} 
+              />
+
+              <TextField 
+                label="LinkedIn URL (optional)" 
+                value={boardMemberForm.linkedin} 
+                onChange={(value) => setBoardMemberForm((prev) => ({ ...prev, linkedin: value }))} 
+              />
+
+              <label className="inline-flex items-center gap-2 text-white/80 text-sm">
+                <input
+                  type="checkbox"
+                  checked={boardMemberForm.isActive}
+                  onChange={(event) => setBoardMemberForm((prev) => ({ ...prev, isActive: event.target.checked }))}
+                />
+                Active
+              </label>
+
+              <button type="submit" className="rounded-md bg-white text-slate-950 px-4 py-2 text-sm font-semibold">
+                {boardMemberForm.isEditing ? 'Update' : 'Add'} Board Member
+              </button>
+            </form>
+
+            <div className="rounded-xl border border-white/10 bg-slate-900/80 p-6 space-y-3">
+              <h2 className="text-xl font-sans font-semibold text-white">Existing Board Members</h2>
+              <div className="space-y-3 max-h-[70vh] overflow-auto pr-1">
+                {boardMembers.map((member) => (
+                  <div key={member.id} className="rounded-md border border-white/10 p-3">
+                    <div className="flex items-start gap-3">
+                      {member.imageUrl && (
+                        <img 
+                          src={member.imageUrl} 
+                          alt={member.name} 
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="text-white font-semibold">{member.name}</p>
+                        <p className="text-white/60 text-xs mt-1">{member.role}</p>
+                        {!member.isActive && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-red-900/30 text-red-300 text-xs rounded">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex gap-3">
+                      <button 
+                        type="button" 
+                        onClick={() => onEditBoardMember(member)} 
+                        className="text-blue-300 hover:text-blue-200 text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => onDeleteBoardMember(member.id)} 
+                        className="text-red-300 hover:text-red-200 text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {boardMembers.length === 0 && <p className="text-white/60 text-sm">No board members yet.</p>}
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </main>
+  );
+}
+
+// Sortable Project Item Component
+function SortableProjectItem({
+  project,
+  index,
+  onRemove,
+}: {
+  project: CmsProjectRecord;
+  index: number;
+  onRemove: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="rounded-md border border-white/20 bg-slate-800/50 p-3 flex items-center gap-3"
+    >
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing text-white/40 hover:text-white/60 transition-colors"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="w-5 h-5" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-slate-950 text-xs font-bold">
+            {index + 1}
+          </span>
+          <p className="text-white font-semibold truncate">{project.title}</p>
+        </div>
+        <p className="text-white/60 text-xs mt-1">
+          {project.projectId || project.dateText} • {project.category || 'General'}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onRemove(project.id)}
+        className="text-red-400 hover:text-red-300 transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+  );
+}
+
+// Sortable Achievement Item Component
+function SortableAchievementItem({
+  achievement,
+  index,
+  onRemove,
+}: {
+  achievement: CmsAchievementRecord;
+  index: number;
+  onRemove: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: achievement.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="rounded-md border border-white/20 bg-slate-800/50 p-3 flex items-center gap-3"
+    >
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing text-white/40 hover:text-white/60 transition-colors"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="w-5 h-5" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-slate-950 text-xs font-bold">
+            {index + 1}
+          </span>
+          <p className="text-white font-semibold truncate">{achievement.title}</p>
+        </div>
+        <p className="text-white/60 text-xs mt-1">
+          {achievement.category === 'project' ? 'Project Award' 
+            : achievement.category === 'individual' ? 'Individual Award'
+            : 'Special Recognition'}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onRemove(achievement.id)}
+        className="text-red-400 hover:text-red-300 transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+    </div>
   );
 }
 

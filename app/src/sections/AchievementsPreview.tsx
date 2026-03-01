@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { achievementsConfig } from '../config';
-import { listAchievementsPublic, type CmsAchievementRecord } from '../lib/cmsApi';
+import { listHomepageFeaturedAchievements, type CmsAchievementRecord } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -55,59 +55,63 @@ export function AchievementsPreview() {
     return () => ctx.revert();
   }, []);
 
-  const [remoteAchievements, setRemoteAchievements] = useState<CmsAchievementRecord[]>([]);
+  const [featuredAchievements, setFeaturedAchievements] = useState<CmsAchievementRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadAchievements = async () => {
-      const rows = await listAchievementsPublic();
-      if (rows.length) {
-        setRemoteAchievements(rows);
+      try {
+        const rows = await listHomepageFeaturedAchievements();
+        setFeaturedAchievements(rows);
+      } catch (error) {
+        console.error('Error loading featured achievements:', error);
+        setFeaturedAchievements([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadAchievements();
   }, []);
 
-  const projectAchievements = remoteAchievements.filter((item) => item.category === 'project');
-  const specialAchievement = remoteAchievements.find((item) => item.category === 'special');
-
-  const cardOneTitle = projectAchievements[0]?.title || achievementsConfig.projectAwards[0]?.title || 'Award Image 01';
-  const cardOneCaption = projectAchievements[0]?.details[0] || achievementsConfig.projectAwards[0]?.details[0] || 'Add your first award image and highlight here.';
-  const cardOneImage = projectAchievements[0]?.imageUrl || achievementsConfig.projectAwards[0]?.image || '';
-  const cardOneAlt = projectAchievements[0]?.imageAlt || achievementsConfig.projectAwards[0]?.imageAlt || 'Award highlight 01';
-
-  const cardTwoTitle = projectAchievements[1]?.title || achievementsConfig.projectAwards[1]?.title || 'Award Image 02';
-  const cardTwoCaption = projectAchievements[1]?.details[0] || achievementsConfig.projectAwards[1]?.details[0] || 'Add your second award image and highlight here.';
-  const cardTwoImage = projectAchievements[1]?.imageUrl || achievementsConfig.projectAwards[1]?.image || '';
-  const cardTwoAlt = projectAchievements[1]?.imageAlt || achievementsConfig.projectAwards[1]?.imageAlt || 'Award highlight 02';
-
-  const specialCaption = specialAchievement?.details[0] || specialAchievement?.title || achievementsConfig.specialRecognition || 'Add your third award image and highlight here.';
-  const specialImage = specialAchievement?.imageUrl || '';
-  const specialAlt = specialAchievement?.imageAlt || 'Special recognition highlight';
-
-  const awardCards = [
-    {
-      title: cardOneTitle,
-      caption: cardOneCaption,
-      image: cardOneImage,
-      imageAlt: cardOneAlt,
-      sizeClass: 'md:col-span-3 md:row-span-2',
-    },
-    {
-      title: cardTwoTitle,
-      caption: cardTwoCaption,
-      image: cardTwoImage,
-      imageAlt: cardTwoAlt,
-      sizeClass: 'md:col-span-3 md:row-span-1 md:col-start-4 md:row-start-1',
-    },
-    {
-      title: 'Special Recognition',
-      caption: specialCaption,
-      image: specialImage,
-      imageAlt: specialAlt,
-      sizeClass: 'md:col-span-2 md:row-span-1 md:col-start-4 md:row-start-2',
-    },
-  ];
+  // Build award cards from featured achievements (only show what's actually featured)
+  const awardCards = featuredAchievements.length > 0 
+    ? featuredAchievements.map((achievement, index) => ({
+        title: achievement.title,
+        caption: (achievement.details && achievement.details.length > 0)
+          ? achievement.details.join(' • ')
+          : 'Award highlight',
+        image: achievement.imageUrl || '',
+        imageAlt: achievement.imageAlt || `${achievement.title} award`,
+        sizeClass: index === 0 
+          ? 'md:col-span-3 md:row-span-2' 
+          : index === 1
+          ? 'md:col-span-3 md:row-span-1 md:col-start-4 md:row-start-1'
+          : 'md:col-span-2 md:row-span-1 md:col-start-4 md:row-start-2',
+      }))
+    : [
+        {
+          title: achievementsConfig.projectAwards[0]?.title || 'Award Image 01',
+          caption: achievementsConfig.projectAwards[0]?.details[0] || 'Add achievements in admin panel',
+          image: achievementsConfig.projectAwards[0]?.image || '',
+          imageAlt: achievementsConfig.projectAwards[0]?.imageAlt || 'Award highlight 01',
+          sizeClass: 'md:col-span-3 md:row-span-2',
+        },
+        {
+          title: achievementsConfig.projectAwards[1]?.title || 'Award Image 02',
+          caption: achievementsConfig.projectAwards[1]?.details[0] || 'Add achievements in admin panel',
+          image: achievementsConfig.projectAwards[1]?.image || '',
+          imageAlt: achievementsConfig.projectAwards[1]?.imageAlt || 'Award highlight 02',
+          sizeClass: 'md:col-span-3 md:row-span-1 md:col-start-4 md:row-start-1',
+        },
+        {
+          title: 'Special Recognition',
+          caption: achievementsConfig.specialRecognition || 'Add achievements in admin panel',
+          image: '',
+          imageAlt: 'Special recognition highlight',
+          sizeClass: 'md:col-span-2 md:row-span-1 md:col-start-4 md:row-start-2',
+        },
+      ];
 
   return (
     <section ref={sectionRef} className="w-full bg-white pt-12 md:pt-16 pb-24 md:pb-32">

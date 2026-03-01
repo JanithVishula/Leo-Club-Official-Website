@@ -1,7 +1,7 @@
 import { isSupabaseConfigured, supabase } from './supabase';
 
 export type StorageBucket = 'images';
-export type ImageFolder = 'members' | 'projects' | 'achievements';
+export type ImageFolder = 'members' | 'projects' | 'achievements' | 'board-members';
 
 function assertConfigured() {
   if (!isSupabaseConfigured || !supabase) {
@@ -12,14 +12,16 @@ function assertConfigured() {
 /**
  * Upload an image file to Supabase Storage
  * @param file - The image file to upload
- * @param folder - The folder within the images bucket (members, projects, achievements)
+ * @param folder - The folder within the images bucket (members, projects, achievements, board-members)
  * @param customName - Optional custom filename (auto-generated if not provided)
+ * @param subfolder - Optional subfolder (e.g., project-specific folder)
  * @returns The public URL of the uploaded image
  */
 export async function uploadImage(
   file: File,
   folder: ImageFolder,
-  customName?: string
+  customName?: string,
+  subfolder?: string
 ): Promise<string> {
   assertConfigured();
 
@@ -42,7 +44,12 @@ export async function uploadImage(
     ? `${customName}.${extension}`
     : `${timestamp}-${randomStr}.${extension}`;
 
-  const filePath = `${folder}/${filename}`;
+  // Build file path with optional subfolder
+  const filePath = subfolder
+    ? `${folder}/${subfolder}/${filename}`
+    : `${folder}/${filename}`;
+
+  console.log('Uploading to path:', filePath);
 
   // Upload to Supabase Storage
   const { data, error } = await supabase!.storage
@@ -53,13 +60,18 @@ export async function uploadImage(
     });
 
   if (error) {
+    console.error('Storage upload error:', error);
     throw new Error(`Upload failed: ${error.message}`);
   }
+
+  console.log('Upload data:', data);
 
   // Get public URL
   const { data: { publicUrl } } = supabase!.storage
     .from('images')
     .getPublicUrl(data.path);
+
+  console.log('Public URL:', publicUrl);
 
   return publicUrl;
 }
@@ -68,14 +80,36 @@ export async function uploadImage(
  * Upload multiple images (e.g., for project galleries)
  * @param files - Array of image files
  * @param folder - The folder within the images bucket
+ * @param subfolder - Optional subfolder (e.g., project-specific folder)
  * @returns Array of public URLs
  */
 export async function uploadMultipleImages(
   files: File[],
-  folder: ImageFolder
+  folder: ImageFolder,
+  subfolder?: string
 ): Promise<string[]> {
-  const uploadPromises = files.map(file => uploadImage(file, folder));
+  const uploadPromises = files.map(file => uploadImage(file, folder, undefined, subfolder));
   return Promise.all(uploadPromises);
+}
+
+/**
+ * Generate a project folder name based on title and date
+ * @param title - Project title
+ * @param date - Completion date (YYYY-MM-DD format)
+ * @returns Sanitized folder name
+ */
+export function generateProjectFolderName(title: string, date: string): string {
+  // Extract date in YYYYMMDD format
+  const dateStr = date.replace(/-/g, '');
+  
+  // Sanitize title: lowercase, remove special chars, replace spaces with hyphens
+  const sanitizedTitle = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .substring(0, 30); // Limit length
+  
+  return `${dateStr}-${sanitizedTitle}`;
 }
 
 /**

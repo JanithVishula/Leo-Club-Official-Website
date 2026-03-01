@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { featuredProjectsConfig } from '../config';
-import { listProjectsPublic } from '../lib/cmsApi';
+import { listHomepageFeaturedProjects } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,10 +17,9 @@ export function FeaturedProjects() {
 
   useEffect(() => {
     const loadProjects = async () => {
-      const remoteProjects = await listProjectsPublic();
+      const remoteProjects = await listHomepageFeaturedProjects();
 
       const mapped = remoteProjects
-        .filter((item) => item.isFeatured)
         .map((item, index) => ({
           id: 10000 + index,
           title: item.title,
