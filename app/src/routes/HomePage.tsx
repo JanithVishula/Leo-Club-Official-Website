@@ -1,6 +1,6 @@
 import { Hero } from '../sections/Hero';
 import { IntroGrid } from '../sections/IntroGrid';
-import { Services } from '../sections/Services';
+import { VisionMission } from '../sections/VisionMission';
 import { WhyChooseMe } from '../sections/WhyChooseMe';
 import { AchievementsPreview } from '../sections/AchievementsPreview';
 import { FeaturedProjects } from '../sections/FeaturedProjects';
@@ -14,7 +14,7 @@ export function HomePage() {
     <main className="page-enter relative w-full overflow-x-hidden">
       <Hero />
       <IntroGrid />
-      <Services />
+      <VisionMission />
       <WhyChooseMe />
       <FeaturedProjects />
       <AchievementsPreview />

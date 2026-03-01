@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { achievementsConfig } from '../config';
+
 import { listHomepageFeaturedAchievements, type CmsAchievementRecord } from '../lib/cmsApi';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -92,29 +92,7 @@ export function AchievementsPreview() {
           ? 'md:col-span-3 md:row-span-1 md:col-start-4 md:row-start-1'
           : 'md:col-span-2 md:row-span-1 md:col-start-4 md:row-start-2',
       }))
-    : [
-        {
-          title: achievementsConfig.projectAwards[0]?.title || 'Award Image 01',
-          caption: achievementsConfig.projectAwards[0]?.details[0] || 'Add achievements in admin panel',
-          image: achievementsConfig.projectAwards[0]?.image || '',
-          imageAlt: achievementsConfig.projectAwards[0]?.imageAlt || 'Award highlight 01',
-          sizeClass: 'md:col-span-3 md:row-span-2',
-        },
-        {
-          title: achievementsConfig.projectAwards[1]?.title || 'Award Image 02',
-          caption: achievementsConfig.projectAwards[1]?.details[0] || 'Add achievements in admin panel',
-          image: achievementsConfig.projectAwards[1]?.image || '',
-          imageAlt: achievementsConfig.projectAwards[1]?.imageAlt || 'Award highlight 02',
-          sizeClass: 'md:col-span-3 md:row-span-1 md:col-start-4 md:row-start-1',
-        },
-        {
-          title: 'Special Recognition',
-          caption: achievementsConfig.specialRecognition || 'Add achievements in admin panel',
-          image: '',
-          imageAlt: 'Special recognition highlight',
-          sizeClass: 'md:col-span-2 md:row-span-1 md:col-start-4 md:row-start-2',
-        },
-      ];
+    : [];
 
   return (
     <section ref={sectionRef} className="w-full bg-white pt-12 md:pt-16 pb-24 md:pb-32">

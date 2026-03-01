@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -9,7 +9,7 @@ import 'swiper/css';
 // @ts-expect-error Swiper CSS import path has no TypeScript declarations
 import 'swiper/css/free-mode';
 import { testimonialsConfig } from '../config';
-import { listTestimonialsPublic } from '../lib/cmsApi';
+import { useTestimonials } from '../hooks/useTestimonials';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,25 +18,7 @@ export function Testimonials() {
   const headerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   
-  // Use Supabase data with config.ts as fallback
-  const [testimonials, setTestimonials] = useState(testimonialsConfig.testimonials);
-  
-  useEffect(() => {
-    // Fetch testimonials from Supabase
-    listTestimonialsPublic().then(data => {
-      if (data.length > 0) {
-        // Map database structure to config structure
-        const mappedData = data.map(t => ({
-          id: t.display_order,
-          name: t.name,
-          role: t.role,
-          image: t.image_url || '',
-          quote: t.quote
-        }));
-        setTestimonials(mappedData);
-      }
-    });
-  }, []);
+  const { testimonials, loading } = useTestimonials();
   
   const hasTestimonialsContent =
     !!testimonialsConfig.titleRegular || testimonials.length > 0;
@@ -142,10 +124,10 @@ export function Testimonials() {
 
                 {/* Author */}
                 <div className="flex items-center gap-4">
-                  {testimonial.image && testimonial.image.trim() !== '' ? (
+                  {testimonial.imageUrl && testimonial.imageUrl.trim() !== '' ? (
                     <div className="w-12 h-12 rounded-full overflow-hidden">
                       <img
-                        src={testimonial.image}
+                        src={testimonial.imageUrl}
                         alt={testimonial.name}
                         className="w-full h-full object-cover"
                         loading="lazy"

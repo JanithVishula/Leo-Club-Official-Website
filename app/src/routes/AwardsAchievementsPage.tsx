@@ -19,7 +19,6 @@ export function AwardsAchievementsPage() {
 
   const projectAwards = useMemo(() => {
     const rows = remoteAchievements.filter((item) => item.category === 'project');
-    if (!rows.length) return achievementsConfig.projectAwards;
     return rows.map((item) => ({
       title: item.title,
       details: item.details,
@@ -30,7 +29,6 @@ export function AwardsAchievementsPage() {
 
   const individualAwards = useMemo(() => {
     const rows = remoteAchievements.filter((item) => item.category === 'individual');
-    if (!rows.length) return achievementsConfig.individualAwards;
     return rows.map((item) => ({
       title: item.title,
       details: item.details,
@@ -41,7 +39,7 @@ export function AwardsAchievementsPage() {
 
   const specialRecognition = useMemo(() => {
     const row = remoteAchievements.find((item) => item.category === 'special');
-    if (!row) return { text: achievementsConfig.specialRecognition, image: null, imageAlt: null };
+    if (!row) return { text: '', image: null, imageAlt: null };
     return { 
       text: row.details[0] || row.title, 
       image: row.imageUrl || null,
@@ -52,17 +50,22 @@ export function AwardsAchievementsPage() {
   return (
     <main className="page-enter min-h-screen w-full bg-slate-950 py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-white/50 text-sm font-body uppercase tracking-widest mb-3">{achievementsConfig.subtitle}</p>
-            <h1 className="text-4xl md:text-5xl font-sans font-bold text-white tracking-tight">{achievementsConfig.title}</h1>
-          </div>
+        {/* Back to Home Button */}
+        <div className="mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white font-body text-sm transition-colors duration-300"
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-300"
           >
-            Back to Home
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm font-body">Back to Home</span>
           </Link>
+        </div>
+
+        <div className="mb-12">
+          <p className="text-white/50 text-sm font-body uppercase tracking-widest mb-3">{achievementsConfig.subtitle}</p>
+          <h1 className="text-4xl md:text-5xl font-sans font-bold text-white tracking-tight">{achievementsConfig.title}</h1>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">

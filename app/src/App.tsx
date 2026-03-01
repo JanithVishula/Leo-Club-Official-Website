@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { useLenis } from './hooks/useLenis';
 import { HomePage } from './routes/HomePage';
+import { AboutPage } from './routes/AboutPage';
 import { ProjectsPage } from './routes/ProjectsPage';
 import { BoardMembersPage } from './routes/BoardMembersPage';
 import { AwardsAchievementsPage } from './routes/AwardsAchievementsPage';
@@ -30,6 +31,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/about" element={<AboutPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/board-members" element={<BoardMembersPage />} />
       <Route path="/awards-achievements" element={<AwardsAchievementsPage />} />

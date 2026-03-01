@@ -1,35 +1,54 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { boardMembersConfig } from '../config';
-import { listBoardMembersPublic } from '../lib/cmsApi';
+import { useBoardMembers } from '../hooks/useBoardMembers';
+
+interface ContactLink {
+  label: string;
+  href: string;
+}
+
+interface MappedMember {
+  id: number;
+  name: string;
+  role: string;
+  image: string;
+  imageAlt: string;
+  email: string;
+  linkedin: string;
+  bio: string;
+  displayOrder: number;
+  cvLink: string;
+  contactNumber: string;
+  contactLinks: ContactLink[];
+}
 
 export function BoardMembersPage() {
-  const [members, setMembers] = useState(boardMembersConfig.members);
+  const { boardMembers } = useBoardMembers();
+  const [members, setMembers] = useState<MappedMember[]>([]);
 
   useEffect(() => {
-    listBoardMembersPublic().then((data) => {
-      if (data.length > 0) {
-        const mapped = data.map((m, index) => ({
-          id: index + 1, // Use numeric ID
-          name: m.name,
-          role: m.role,
-          image: m.imageUrl || '',
-          imageAlt: `${m.name} - ${m.role}`,
-          email: m.email || '',
-          linkedin: m.linkedin || '',
-          bio: m.bio || '',
-          displayOrder: m.displayOrder,
-          cvLink: '#',
-          contactNumber: m.email || 'Not provided',
-          contactLinks: [
-            ...(m.email ? [{ label: 'Email', href: `mailto:${m.email}` }] : []),
-            ...(m.linkedin ? [{ label: 'LinkedIn', href: m.linkedin }] : []),
-          ],
-        }));
-        setMembers(mapped);
-      }
-    });
-  }, []);
+    if (boardMembers.length > 0) {
+      const mapped = boardMembers.map((m, index) => ({
+        id: index + 1,
+        name: m.name,
+        role: m.role,
+        image: m.imageUrl || '',
+        imageAlt: `${m.name} - ${m.role}`,
+        email: m.email || '',
+        linkedin: m.linkedin || '',
+        bio: m.bio || '',
+        displayOrder: m.displayOrder,
+        cvLink: '#',
+        contactNumber: m.email || 'Not provided',
+        contactLinks: [
+          ...(m.email ? [{ label: 'Email', href: `mailto:${m.email}` }] : []),
+          ...(m.linkedin ? [{ label: 'LinkedIn', href: m.linkedin }] : []),
+        ],
+      }));
+      setMembers(mapped);
+    }
+  }, [boardMembers]);
 
   const hierarchyOrder: Record<string, number> = {
     President: 1,
@@ -74,17 +93,22 @@ export function BoardMembersPage() {
   return (
     <main className="page-enter min-h-screen w-full bg-slate-950 py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-white/50 text-sm font-body uppercase tracking-widest mb-3">{boardMembersConfig.subtitle}</p>
-            <h1 className="text-4xl md:text-5xl font-sans font-bold text-white tracking-tight">{boardMembersConfig.title}</h1>
-          </div>
+        {/* Back to Home Button */}
+        <div className="mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white font-body text-sm transition-colors duration-300"
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-300"
           >
-            Back to Home
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm font-body">Back to Home</span>
           </Link>
+        </div>
+
+        <div className="mb-12">
+          <p className="text-white/50 text-sm font-body uppercase tracking-widest mb-3">{boardMembersConfig.subtitle}</p>
+          <h1 className="text-4xl md:text-5xl font-sans font-bold text-white tracking-tight">{boardMembersConfig.title}</h1>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">

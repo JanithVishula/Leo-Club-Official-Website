@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MouseEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { heroConfig } from '../config';
@@ -8,6 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export function Hero() {
   const navigate = useNavigate();
+  const location = useLocation();
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
@@ -23,6 +24,13 @@ export function Hero() {
   const handleRouteTransition = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
     event.preventDefault();
     if (isRouteTransitioningRef.current) return;
+
+    // If already on home page and clicking home link, scroll to top
+    if (location.pathname === '/' && href === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     isRouteTransitioningRef.current = true;
 
     gsap.to(sectionRef.current, {
@@ -174,9 +182,20 @@ export function Hero() {
 
       {/* Navigation hint */}
       <nav className="absolute top-0 left-0 right-0 z-40 px-6 md:px-12 py-6 flex items-center justify-between">
-        <div className="text-white font-sans font-bold text-xs md:text-sm tracking-tight">
-          {heroConfig.brandName}
-        </div>
+        <a 
+          href="/" 
+          onClick={(event) => handleRouteTransition(event, '/')}
+          className="flex items-center gap-3 group cursor-pointer"
+        >
+          <img 
+            src="/Logo.png" 
+            alt="Leo Club Logo" 
+            className="h-8 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="text-white font-sans font-bold text-xs md:text-sm tracking-tight group-hover:text-white/90 transition-colors duration-300">
+            {heroConfig.brandName}
+          </div>
+        </a>
         {heroConfig.navLinks.length > 0 && (
           <div className="hidden md:flex items-center gap-8 text-white/80 text-sm font-body">
             {heroConfig.navLinks.map((link) =>
